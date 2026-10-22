@@ -85,9 +85,18 @@ git tag -m "pub 1.0.0" v1.0.0 && git push origin v1.0.0
 1. It checks the tag matches the workspace version in `Cargo.toml`, and runs the tests.
 2. It builds `pub` with the `dist` profile (link-time optimisation, stripped) for Linux x86_64 and
    arm64 (statically linked with musl, so it runs on any distribution) and for macOS Intel and Apple
-   Silicon.
+   Silicon, and signs build provenance for each archive and binary
+   ([`gh attestation verify`](../installation.md#verifying-a-download)).
 3. It creates the GitHub release, with a `pub-<tag>-<target>.tar.gz` per platform (the binary,
    `LICENSE` and `README.md`), its SHA-256 checksum, and notes generated from the commits.
 4. It publishes this book to GitHub Pages with `.github/workflows/docs.yml`. CI builds the book but
    doesn't publish it. To publish documentation changes between releases, run the **Docs** workflow
    from the Actions tab (Run workflow, on `main`).
+5. It writes `Formula/pub.rb` to the [hyteio/homebrew-tap](https://github.com/hyteio/homebrew-tap)
+   repository, from `.github/scripts/homebrew-formula.sh` and the release's checksums. This needs
+   the `HOMEBREW_TAP_TOKEN` secret in the `homebrew` environment (limited to `v*` tags): a
+   fine-grained token with Contents read and write on that repository only. Without it the step is
+   skipped.
+
+The install script, `docs/src/install.sh`, is served from the documentation site
+(`https://hyteio.github.io/pub/install.sh`), so changes to it go live when the docs are published.

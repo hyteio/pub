@@ -51,6 +51,10 @@ jobs:
           - target: aarch64-apple-darwin
             os: macos-latest
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write     # to sign the build attestation
+      attestations: write
     steps:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
@@ -71,6 +75,13 @@ jobs:
           cp "target/${{ matrix.target }}/dist/pub" LICENSE README.md "$name/"
           tar -czf "$name.tar.gz" "$name"
           shasum -a 256 "$name.tar.gz" > "$name.tar.gz.sha256"
+      # Signed provenance: `gh attestation verify FILE --repo hyteio/pub` proves the archive (or the
+      # binary in it) was built here, from this tag's commit.
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            pub-*.tar.gz
+            target/${{ matrix.target }}/dist/pub
       - uses: actions/upload-artifact@v4
         with:
           name: pub-${{ matrix.target }}
@@ -97,6 +108,38 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --title "pub ${GITHUB_REF_NAME}" \
             --generate-notes
+
+  homebrew:
+    name: update the Homebrew tap
+    needs: release
+    runs-on: ubuntu-latest
+    # The `homebrew` environment (limited to v* tags) holds HOMEBREW_TAP_TOKEN: a fine-grained token
+    # with contents: write on hyteio/homebrew-tap. Without it, this is skipped.
+    environment: homebrew
+    env:
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        if: env.TAP_TOKEN != ''
+      - uses: actions/download-artifact@v4
+        if: env.TAP_TOKEN != ''
+        with:
+          pattern: pub-*
+          path: dist
+          merge-multiple: true
+      - name: write and push the formula
+        if: env.TAP_TOKEN != ''
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          git clone "https://x-access-token:${TAP_TOKEN}@github.com/hyteio/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+          .github/scripts/homebrew-formula.sh "$version" dist > tap/Formula/pub.rb
+          cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/pub.rb
+          git diff --cached --quiet || git commit -m "pub $version"
+          git push
 
   docs:
     needs: check

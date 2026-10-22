@@ -27,12 +27,13 @@ needs.
 
 ## Install
 
-Download a binary for Linux or macOS from the [releases](https://github.com/hyteio/pub/releases), or
-build from source:
-
 ```bash
-cargo install --git https://github.com/hyteio/pub pub-cli
+curl -fsSL https://hyteio.github.io/pub/install.sh | sh     # Linux and macOS
+brew install hyteio/tap/pub                                 # Homebrew
+cargo install --git https://github.com/hyteio/pub pub-cli   # from source
 ```
+
+Binaries are also on the [releases](https://github.com/hyteio/pub/releases) page.
 
 See [Installation](https://hyteio.github.io/pub/installation.html) for slimmer builds.
 
