@@ -1,0 +1,19 @@
+/* The pub logo before the book's title in the top bar. */
+.menu-title::before {
+    content: "";
+    display: inline-block;
+    width: 1.3em;
+    height: 1.3em;
+    margin-right: 0.4em;
+    vertical-align: -0.25em;
+    background: url("../images/icon.svg") no-repeat center / contain;
+}
+
+/* The front page's banner, edge to edge in the content column. */
+img.banner {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin: 0 0 1.5em;
+}

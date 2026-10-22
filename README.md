@@ -1,4 +1,4 @@
-# pub — the curl for messaging
+<p align="center"><img src="docs/src/images/banner.png" alt="pub — the curl for messaging" width="100%"></p>
 
 `pub` sends, receives, browses and moves messages on message brokers from the command line.
 
