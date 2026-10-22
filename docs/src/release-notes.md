@@ -3,6 +3,11 @@
 Downloads for every release are on [GitHub](https://github.com/hyteio/pub/releases); see
 [Installation](installation.md).
 
+## 1.0.3
+
+- `pub --help` and the starter configuration from `pub config init` use ActiveMQ OpenWire
+  (`amq://host:61616`) for their examples.
+
 ## 1.0.2
 
 ### Installing
