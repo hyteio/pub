@@ -12,7 +12,7 @@ The scheme picks the module (`pub modules` lists them); the module decides which
 supports and how the path becomes a destination. The query sets any setting:
 
 ```bash
-pub ping 'stomps://app:pw@mq01:61612?receive-timeout=2s&insecure=true'
+pub ping 'amqs://app:pw@mq01:61617?receive-timeout=2s&insecure=true'
 ```
 
 No configuration file is needed: a URL carries everything.
@@ -24,20 +24,20 @@ An alias is a named URL with settings, kept in a git-style config file:
 ```ini
 # ~/.pub/config.d/jms.company.com.conf
 [alias "jms.company.com"]
-	url = stomp+ssl://mq01.company.com:61612
+	url = amqs://mq01.company.com:61617
 	user = app
 	password-env = JMS_PASSWORD
 ```
 
-`pub alias add jms.company.com stomp+ssl://mq01.company.com:61612 --set user=app` writes that file.
+`pub alias add jms.company.com amqs://mq01.company.com:61617 --set user=app` writes that file.
 Anything after the alias name is appended to its URL's path, and a query after it overrides the
 alias's settings:
 
 ```bash
 pub send jms.company.com/queue/orders -f order.json
-# → stomp+ssl://app@mq01.company.com:61612/queue/orders
+# → amqs://app@mq01.company.com:61617/queue/orders
 
-pub send 'jms.company.com/queue/orders?receipts=false' -d hi
+pub send 'jms.company.com/queue/orders?jms.useAsyncSend=true' -d hi
 ```
 
 The path after an alias can't contain `.` or `..` segments, and a `#` is kept as the URL's
@@ -59,5 +59,5 @@ With `default-scheme` set in the `[core]` section, a bare `host:port` that isn't
 
 ```ini
 [core]
-	default-scheme = stomp
+	default-scheme = amq
 ```

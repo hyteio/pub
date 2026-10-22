@@ -5,8 +5,8 @@
 A target is a URL: the scheme picks the protocol, the path is the destination.
 
 ```bash
-pub send stomp://localhost:61613/queue/orders -d 'hello'
-pub recv stomp://localhost:61613/queue/orders
+pub send amq://localhost:61616/queue/orders -d 'hello'
+pub recv amq://localhost:61616/queue/orders
 ```
 
 `recv` (or `receive`) waits for one message, writes its body to stdout and acknowledges it.
@@ -53,7 +53,7 @@ Better, keep them in configuration (see [Credentials](credentials.md)).
 ## Aliases
 
 ```bash
-pub alias add prod stomp+ssl://mq01.company.com:61612 --set user=app --set password-env=MQ_PASSWORD
+pub alias add prod amqs://mq01.company.com:61617 --set user=app --set password-env=MQ_PASSWORD
 pub send prod/queue/orders -d hi
 pub alias resolve prod/queue/orders
 ```

@@ -88,5 +88,6 @@ git tag -m "pub 1.0.0" v1.0.0 && git push origin v1.0.0
    Silicon.
 3. It creates the GitHub release, with a `pub-<tag>-<target>.tar.gz` per platform (the binary,
    `LICENSE` and `README.md`), its SHA-256 checksum, and notes generated from the commits.
-4. It publishes this book to GitHub Pages. Only releases publish the documentation; CI builds it but
-   doesn't publish it.
+4. It publishes this book to GitHub Pages with `.github/workflows/docs.yml`. CI builds the book but
+   doesn't publish it. To publish documentation changes between releases, run the **Docs** workflow
+   from the Actions tab (Run workflow, on `main`).
