@@ -144,6 +144,7 @@ jobs:
   docs:
     needs: check
     permissions:
+      contents: read
       pages: write
       id-token: write
     uses: ./.github/workflows/docs.yml
