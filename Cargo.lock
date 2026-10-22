@@ -366,7 +366,7 @@ dependencies = [
 
 [[package]]
 name = "pub-amqp"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "pub-amqp",
@@ -375,7 +375,7 @@ dependencies = [
 
 [[package]]
 name = "pub-cli"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "clap",
  "pub-amqp",
@@ -392,7 +392,7 @@ dependencies = [
 
 [[package]]
 name = "pub-core"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "idna_adapter",
@@ -408,7 +408,7 @@ dependencies = [
 
 [[package]]
 name = "pub-format-json"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "base64 0.23.1",
  "pub-core",
@@ -418,7 +418,7 @@ dependencies = [
 
 [[package]]
 name = "pub-format-xml"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -428,7 +428,7 @@ dependencies = [
 
 [[package]]
 name = "pub-mqtt"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "pub-core",
@@ -437,7 +437,7 @@ dependencies = [
 
 [[package]]
 name = "pub-openwire"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "miniz_oxide",
@@ -448,7 +448,7 @@ dependencies = [
 
 [[package]]
 name = "pub-ramqp"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "pub-core",
@@ -457,7 +457,7 @@ dependencies = [
 
 [[package]]
 name = "pub-stomp"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
  "anyhow",
  "pub-core",

@@ -3,6 +3,35 @@
 Downloads for every release are on [GitHub](https://github.com/hyteio/pub/releases); see
 [Installation](installation.md).
 
+## 1.0.2
+
+### Installing
+
+- An install script for Linux and macOS: `curl -fsSL https://hyteio.github.io/pub/install.sh | sh`.
+- Homebrew: `brew install hyteio/tap/pub`.
+- Signed build provenance for every archive and binary: `gh attestation verify FILE --repo
+  hyteio/pub` (see [Verifying a download](installation.md#verifying-a-download)).
+
+### Fixes
+
+- MQTT: settings after a `#` wildcard in a URL apply, so `mqtt://broker/sensors/#?version=3.1.1`
+  subscribes to `sensors/#` with 3.1.1. They used to become part of the topic.
+- MQTT: topic filters are checked before subscribing (`#` only as the whole last level, `+` only as
+  a whole level).
+
+### Clearer errors
+
+- A URL pointed at another protocol's port names it, for example an `amqp://` URL on ActiveMQ's
+  OpenWire port: "the server looks like an ActiveMQ OpenWire port; try amq:// or amqs://".
+  OpenWire, AMQP 1.0, RabbitMQ AMQP 0-9-1, STOMP, HTTP and SSH are recognised.
+- A TLS URL pointed at a plain-text port says so.
+- A broker that hangs up on MQTT 5 gets a hint to try `-O version=3.1.1` (ActiveMQ speaks 3.1.1
+  only).
+
+### Changes
+
+- OpenWire's `broker-type` is `activemq` or `artemis`; `classic` still works as `activemq`.
+
 ## 1.0.1
 
 No changes to `pub` itself.
