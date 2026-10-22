@@ -75,10 +75,11 @@ with *azure_servicebus* ticked to include the Service Bus emulator.
 
 ## Releases
 
+Before tagging, add the version to the [release notes](../release-notes.md).
 `.github/workflows/release.yml` runs when a version tag is pushed:
 
 ```bash
-git tag v1.0.0 && git push origin v1.0.0
+git tag -m "pub 1.0.0" v1.0.0 && git push origin v1.0.0
 ```
 
 1. It checks the tag matches the workspace version in `Cargo.toml`, and runs the tests.

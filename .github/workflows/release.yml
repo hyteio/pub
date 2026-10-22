@@ -1,6 +1,6 @@
 name: Release
 
-# Push a version tag to release: git tag v1.0.0 && git push origin v1.0.0
+# Push a version tag to release: git tag -m "pub 1.0.0" v1.0.0 && git push origin v1.0.0
 # The tag must match the workspace version in Cargo.toml.
 on:
   push:

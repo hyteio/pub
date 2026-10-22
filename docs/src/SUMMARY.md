@@ -31,6 +31,10 @@
 - [Exit codes](reference/exit-codes.md)
 - [Limits and permissions](reference/limits.md)
 
+# Releases
+
+- [Release notes](release-notes.md)
+
 # Development
 
 - [Architecture](development/architecture.md)
