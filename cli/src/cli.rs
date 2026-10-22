@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 const AFTER_HELP: &str = "\
-Targets are URLs (stomp://host:61613/queue/orders) or aliases from ~/.pub
-(`pub alias add jms.company.com stomp://mq01.company.com:61613`), optionally
+Targets are URLs (amq://host:61616/queue/orders) or aliases from ~/.pub
+(`pub alias add jms.company.com amq://mq01.company.com:61616`), optionally
 followed by a path: jms.company.com/queue/orders
 
 Configuration: ~/.pub/config and ~/.pub/config.d/* (git-config syntax);
@@ -519,7 +519,7 @@ pub enum ConfigCmd {
     Check,
     /// List the settings pub understands (core, or one module's)
     Settings {
-        /// Module name, e.g. stomp; omit for all
+        /// Module name, e.g. openwire; omit for all
         module: Option<String>,
         /// Print Markdown tables (for the documentation)
         #[arg(long)]
@@ -527,7 +527,7 @@ pub enum ConfigCmd {
     },
     /// List standard message headers and how each module carries them
     Headers {
-        /// Module name, e.g. stomp; omit for all
+        /// Module name, e.g. openwire; omit for all
         module: Option<String>,
     },
 }

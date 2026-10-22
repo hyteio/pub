@@ -25,8 +25,8 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 
-Targets are URLs (stomp://host:61613/queue/orders) or aliases from ~/.pub
-(`pub alias add jms.company.com stomp://mq01.company.com:61613`), optionally
+Targets are URLs (amq://host:61616/queue/orders) or aliases from ~/.pub
+(`pub alias add jms.company.com amq://mq01.company.com:61616`), optionally
 followed by a path: jms.company.com/queue/orders
 
 Configuration: ~/.pub/config and ~/.pub/config.d/* (git-config syntax);
@@ -544,7 +544,7 @@ List the settings pub understands (core, or one module's)
 Usage: pub config settings [OPTIONS] [MODULE]
 
 Arguments:
-  [MODULE]  Module name, e.g. stomp; omit for all
+  [MODULE]  Module name, e.g. openwire; omit for all
 
 Options:
       --markdown  Print Markdown tables (for the documentation)
@@ -559,7 +559,7 @@ List standard message headers and how each module carries them
 Usage: pub config headers [MODULE]
 
 Arguments:
-  [MODULE]  Module name, e.g. stomp; omit for all
+  [MODULE]  Module name, e.g. openwire; omit for all
 
 Options:
   -h, --help  Print help

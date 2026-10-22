@@ -18,8 +18,8 @@ const STARTER_CONFIG: &str = r#"# pub configuration (git-config syntax). Later f
 
 [core]
 	# Scheme used when a target is neither a URL nor an alias:
-	#   pub ping mq01:61613   ->   stomp://mq01:61613
-	# default-scheme = stomp
+	#   pub ping mq01:61616   ->   amq://mq01:61616
+	# default-scheme = amq
 
 [core "config"]
 	# Unknown keys/sections in config files are errors (true) or warnings (false).
@@ -60,13 +60,13 @@ const STARTER_CONFIG: &str = r#"# pub configuration (git-config syntax). Later f
 	# max-payload = 64m        # largest body from -d / -f / stdin
 
 # Per-protocol defaults:
-# [protocol "stomp"]
+# [protocol "amq"]
 #	user = app
-#	receipts = true
+#	jms.useAsyncSend = true
 
 # Aliases usually live one per file in ~/.pub/config.d/ (see `pub alias add`):
 # [alias "jms.company.com"]
-#	url = stomp+ssl://mq01.company.com:61612
+#	url = amqs://mq01.company.com:61617
 #	user = app
 #	password-file = ~/.pub/jms.password   # chmod 400
 #	password-env = JMS_PASSWORD
