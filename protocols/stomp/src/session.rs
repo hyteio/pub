@@ -391,7 +391,17 @@ impl StompSession {
             .headers
             .extend(destination.options.iter().cloned());
         subscribe.headers.extend(opts.headers.iter().cloned());
-        self.send(&subscribe)?;
+        // With a receipt, a refused subscription is an error now rather than a
+        // silent wait, and once it arrives the subscription is in place.
+        if self.receipts {
+            subscribe.headers.retain(|(k, _)| k != "receipt");
+            self.send_with_receipt(subscribe)?;
+            self.conn
+                .trace()
+                .info(format_args!("subscribed to {}", destination.name));
+        } else {
+            self.send(&subscribe)?;
+        }
 
         let deadline = opts.timeout.map(|t| Instant::now() + t);
         let mut idle_until = opts.idle.map(|d| Instant::now() + d);

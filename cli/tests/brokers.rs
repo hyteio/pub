@@ -6,7 +6,7 @@
 //! Every test uses its own destinations, so they can run in parallel and
 //! against brokers that already hold messages.
 
-use std::io::Write;
+use std::io::{BufRead, BufReader, Read, Write};
 use std::process::{Command, Output, Stdio};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::thread;
@@ -863,13 +863,61 @@ fn stomp_brokers() -> Vec<(&'static str, String, String, &'static [&'static str]
     ]
 }
 
-/// Start `pub recv` in the background (a subscriber that must exist before sending).
+/// What `pub -v` logs once a subscription is in place, per protocol.
+const SUBSCRIBED: &[&str] = &[
+    "* subscribed to ",  // STOMP (after the RECEIPT), MQTT (after SUBACK)
+    "* receiving from ", // AMQP 1.0 (after the broker's attach)
+    "* consuming ",      // OpenWire (after the ConsumerInfo response), AMQP 0-9-1
+];
+
+/// Start `pub recv` in the background: a subscriber that must exist before
+/// anything is sent. Returns once its `-v` trace shows the subscription is in
+/// place (or after 15s, leaving the test to fail on what it gets).
 fn listen(args: Vec<String>) -> thread::JoinHandle<Output> {
-    let h = thread::spawn(move || {
-        let a: Vec<&str> = args.iter().map(String::as_str).collect();
-        pub_cmd(&a, None)
+    let home = tempfile::tempdir().unwrap();
+    let mut child = Command::new(env!("CARGO_BIN_EXE_pub"))
+        .args(&args)
+        .arg("-v")
+        .env("PUB_HOME", home.path())
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let (ready, subscribed) = std::sync::mpsc::channel();
+    let err = child.stderr.take().unwrap();
+    let stderr = thread::spawn(move || {
+        let mut all = Vec::new();
+        for line in BufReader::new(err).split(b'\n') {
+            let line = line.unwrap_or_default();
+            if SUBSCRIBED
+                .iter()
+                .any(|m| line.windows(m.len()).any(|w| w == m.as_bytes()))
+            {
+                let _ = ready.send(());
+            }
+            all.extend_from_slice(&line);
+            all.push(b'\n');
+        }
+        all
     });
-    thread::sleep(Duration::from_secs(2));
+    let h = thread::spawn(move || {
+        let _home = home;
+        let mut stdout = Vec::new();
+        child
+            .stdout
+            .take()
+            .unwrap()
+            .read_to_end(&mut stdout)
+            .unwrap();
+        let status = child.wait().unwrap();
+        Output {
+            status,
+            stdout,
+            stderr: stderr.join().unwrap(),
+        }
+    });
+    let _ = subscribed.recv_timeout(Duration::from_secs(15));
     h
 }
 
