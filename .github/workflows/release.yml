@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# One release per tag: a second run for the same tag cancels the first.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
