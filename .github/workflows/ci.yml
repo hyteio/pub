@@ -29,7 +29,7 @@ jobs:
     name: rustfmt and clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
@@ -45,7 +45,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       # Unit tests and end-to-end tests against the in-process mock brokers.
@@ -55,7 +55,7 @@ jobs:
     name: one module at a time
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: build with no modules, then each alone
@@ -74,7 +74,7 @@ jobs:
     name: advisories, licenses, bans
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           command: check
@@ -86,10 +86,10 @@ jobs:
     needs: test
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -97,13 +97,21 @@ jobs:
       - name: interop suite
         env:
           AZURE_SERVICEBUS: ${{ inputs.azure_servicebus && '1' || '' }}
-        run: interop/run.sh
+        run: |
+          set -o pipefail
+          interop/run.sh 2>&1 | tee interop.log
+      # Failures as annotations, so they show on the run's page.
+      - name: report failures
+        if: failure()
+        run: |
+          grep -E 'panicked at|assertion|^test .* FAILED|^  left:|^ right:|did not start|^error' interop.log \
+            | head -60 | while IFS= read -r line; do echo "::error title=interop::${line}"; done
 
   docs:
     name: documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - uses: taiki-e/install-action@v2

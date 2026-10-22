@@ -147,10 +147,8 @@ certfile /mosquitto/config/server.pem
 keyfile /mosquitto/config/server.key
 listener 1884
 allow_anonymous false
-password_file /mosquitto/config/passwd
+password_file /mosquitto/data/passwd
 CONF
-docker run --rm -v "$work/mosquitto:/m" "$mosquitto_image" mosquitto_passwd -b -c /m/passwd app s3cret
-chmod 644 "$work/mosquitto/passwd" 2>/dev/null || true
 
 echo "interop: starting brokers"
 docker rm -f $containers >/dev/null 2>&1 || true
@@ -165,8 +163,15 @@ docker run -d --name pub-it-artemis -p $ARTEMIS_PORT:61616 -p $ARTEMIS_TLS_PORT:
   -e ARTEMIS_USER=artemis -e ARTEMIS_PASSWORD=artemis \
   -v "$certs:/certs:ro" -v "$work/artemis:/var/lib/artemis-instance/etc-override:ro" \
   "$artemis_image" >/dev/null
+# The password file is made inside the container, owned by mosquitto and 0600:
+# Mosquitto (which drops to its own user) must be able to read it, and 2.1 warns
+# that it will refuse one others can read. Made on the host, Linux leaves it
+# root's and unreadable.
 docker run -d --name pub-it-mosquitto -p $MOSQUITTO_PORT:1883 -p $MOSQUITTO_TLS_PORT:8883 \
-  -p $MOSQUITTO_AUTH_PORT:1884 -v "$work/mosquitto:/mosquitto/config" "$mosquitto_image" >/dev/null
+  -p $MOSQUITTO_AUTH_PORT:1884 -v "$work/mosquitto:/mosquitto/config" "$mosquitto_image" \
+  sh -c 'mosquitto_passwd -b -c /mosquitto/data/passwd app s3cret &&
+         chown mosquitto:mosquitto /mosquitto/data/passwd && chmod 0600 /mosquitto/data/passwd &&
+         exec mosquitto -c /mosquitto/config/mosquitto.conf' >/dev/null
 docker run -d --name pub-it-rabbitmq -p $RABBITMQ_AMQP_PORT:5672 "$rabbitmq_image" >/dev/null
 if [ -n "${AZURE_SERVICEBUS:-}" ]; then
   # The SA password only lives inside this throwaway network.
@@ -188,7 +193,7 @@ wait_for() { # container, log line
 }
 wait_for pub-it-classic "Apache ActiveMQ .* started"
 wait_for pub-it-artemis "AMQ221007"
-wait_for pub-it-mosquitto "running"
+wait_for pub-it-mosquitto "mosquitto version .* running"
 wait_for pub-it-rabbitmq "Server startup complete"
 if [ -n "${AZURE_SERVICEBUS:-}" ]; then
   echo "interop: waiting for the Service Bus emulator"
