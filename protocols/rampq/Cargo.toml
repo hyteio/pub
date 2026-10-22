@@ -1,0 +1,18 @@
+[package]
+name = "pub-rampq"
+publish = false
+description = "AMQP 0-9-1 (RabbitMQ) module for pub"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+pub-core.workspace = true
+
+[features]
+# In-process AMQP 0-9-1 broker used by tests.
+mock = []
+
+[dev-dependencies]
+pub-rampq = { path = ".", features = ["mock"] }

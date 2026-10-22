@@ -1,0 +1,24 @@
+[package]
+name = "pub-core"
+publish = false
+description = "Shared plumbing for pub: config, aliases, sockets, TLS, framing and the module API"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+percent-encoding.workspace = true
+rustls.workspace = true
+rustls-native-certs.workspace = true
+socket2.workspace = true
+url.workspace = true
+webpki-roots.workspace = true
+x509-parser.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+rcgen.workspace = true
+tempfile.workspace = true

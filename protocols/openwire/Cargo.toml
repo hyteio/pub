@@ -1,0 +1,20 @@
+[package]
+name = "pub-openwire"
+publish = false
+description = "ActiveMQ OpenWire (v12) module for pub"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+miniz_oxide.workspace = true
+serde_json.workspace = true
+pub-core.workspace = true
+
+[features]
+# In-process OpenWire broker used by tests.
+mock = []
+
+[dev-dependencies]
+pub-openwire = { path = ".", features = ["mock"] }

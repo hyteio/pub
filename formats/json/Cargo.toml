@@ -1,0 +1,13 @@
+[package]
+name = "pub-format-json"
+publish = false
+description = "JSON / JSON Lines message format for pub"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+base64.workspace = true
+pub-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true

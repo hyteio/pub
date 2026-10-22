@@ -1,0 +1,41 @@
+# cargo-deny policy: `cargo deny --all-features check`. CI runs it on every
+# change and weekly, so new advisories surface even when nothing changes here.
+
+[graph]
+all-features = true
+
+[advisories]
+# RustSec, as `cargo audit` uses; vulnerabilities fail the check.
+yanked = "deny"
+
+[licenses]
+# Permissive licenses compatible with pub's Apache-2.0.
+allow = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "MIT",
+    "ISC",
+    "BSD-3-Clause",
+    "0BSD",
+    "Zlib",
+    "Unicode-3.0",
+    "CDLA-Permissive-2.0", # webpki-roots (Mozilla's root store)
+    "Unlicense",
+]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# pub's own crates refer to each other by path; they are not published.
+allow-wildcard-paths = true
+deny = [
+    # TLS is rustls with the ring provider only.
+    { crate = "aws-lc-rs", reason = "pub uses rustls with ring only" },
+    { crate = "aws-lc-sys", reason = "pub uses rustls with ring only" },
+    { crate = "openssl-sys", reason = "pub doesn't link OpenSSL" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

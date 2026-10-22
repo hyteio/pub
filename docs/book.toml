@@ -1,0 +1,19 @@
+[book]
+title = "pub — the curl for messaging"
+description = "A command-line client for STOMP, MQTT, ActiveMQ OpenWire, AMQP 1.0 and RabbitMQ AMQP 0-9-1"
+authors = ["The pub authors"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+git-repository-url = "https://github.com/hyteio/pub"
+edit-url-template = "https://github.com/hyteio/pub/edit/main/docs/{path}"
+site-url = "/pub/"
+no-section-label = true
+
+[output.html.search]
+enable = true

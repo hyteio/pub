@@ -1,0 +1,37 @@
+[workspace]
+resolver = "2"
+members = ["core", "protocols/*", "formats/*", "cli"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+pub-core = { path = "core" }
+pub-stomp = { path = "protocols/stomp" }
+pub-mqtt = { path = "protocols/mqtt" }
+pub-openwire = { path = "protocols/openwire" }
+pub-amqp = { path = "protocols/amqp" }
+pub-rampq = { path = "protocols/rampq" }
+pub-format-json = { path = "formats/json" }
+pub-format-xml = { path = "formats/xml" }
+anyhow = "1"
+base64 = "0.23"
+clap = { version = "4", features = ["derive"] }
+# Pure-Rust zlib for OpenWire compression (jms.useCompression).
+miniz_oxide = { version = "0.8", default-features = false, features = ["with-alloc"] }
+percent-encoding = "2"
+quick-xml = "0.42"
+# preserve_order keeps fields, properties and headers in message order.
+serde = "1"
+serde_json = { version = "1", features = ["preserve_order"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-native-certs = "0.8"
+# `all` adds TcpKeepalive::with_retries (TCP_KEEPCNT) and option getters.
+socket2 = { version = "0.6", features = ["all"] }
+tempfile = "3"
+url = "2"
+x509-parser = "0.18"
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
+webpki-roots = "1"
