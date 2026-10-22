@@ -126,22 +126,3 @@ jobs:
             exit 1
           }
       - run: mdbook build docs
-      - uses: actions/upload-pages-artifact@v3
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        with:
-          path: docs/book
-
-  publish-docs:
-    name: publish documentation
-    needs: docs
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-    steps:
-      - id: deploy
-        uses: actions/deploy-pages@v4

@@ -27,6 +27,9 @@ needs.
 
 ## Install
 
+Download a binary for Linux or macOS from the [releases](https://github.com/hyteio/pub/releases), or
+build from source:
+
 ```bash
 cargo install --git https://github.com/hyteio/pub pub-cli
 ```

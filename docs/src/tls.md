@@ -14,8 +14,11 @@ has no SSLv3, TLS 1.0 or 1.1, no CBC suites and no RSA key exchange.
 
 ## Trust
 
-Without `ca-file`, servers are verified against the operating system's trusted roots, or the
-bundled Mozilla roots when there's no system store. **`ca-file` replaces them**, as curl's
+Without `ca-file`, servers are verified against the operating system's trusted roots; pub carries
+no certificates of its own. A system with none (a `FROM scratch` container, say) is a TLS error
+(exit 35) until you install them (the `ca-certificates` package) or set `ca-file`.
+
+**`ca-file` replaces the system's roots**, as curl's
 `--cacert` does: a server whose certificate comes from a public CA is refused unless that CA is in
 the file too. That's what you want for a private CA: no public CA can vouch for your broker's name.
 

@@ -13,8 +13,7 @@ rustls.workspace = true
 rustls-native-certs.workspace = true
 socket2.workspace = true
 url.workspace = true
-webpki-roots.workspace = true
-x509-parser.workspace = true
+idna_adapter.workspace = true
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

@@ -19,7 +19,6 @@ allow = [
     "0BSD",
     "Zlib",
     "Unicode-3.0",
-    "CDLA-Permissive-2.0", # webpki-roots (Mozilla's root store)
     "Unlicense",
 ]
 confidence-threshold = 0.9

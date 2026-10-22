@@ -1,6 +1,20 @@
 # Installation
 
-pub is built from source with [Rust](https://rustup.rs) (stable).
+## Prebuilt binaries
+
+Each [release](https://github.com/hyteio/pub/releases) has binaries for Linux (x86_64 and arm64,
+statically linked, for any distribution) and macOS (Intel and Apple Silicon):
+
+```bash
+tar -xzf pub-v1.0.0-aarch64-apple-darwin.tar.gz
+sudo mv pub-v1.0.0-aarch64-apple-darwin/pub /usr/local/bin/
+```
+
+Each archive has a `.sha256` file to check it against (`shasum -a 256 -c FILE.sha256`).
+
+## From source
+
+With [Rust](https://rustup.rs) (stable):
 
 ```bash
 cargo install --git https://github.com/hyteio/pub pub-cli
@@ -57,4 +71,4 @@ cargo build --release -p pub-cli --no-default-features --features mqtt
 
 pub uses [rustls](https://github.com/rustls/rustls) with the `ring` crypto provider. It doesn't
 link OpenSSL or aws-lc, so there are no system TLS libraries to install. Trusted roots come from
-the operating system, falling back to the bundled Mozilla roots (see [TLS](tls.md)).
+the operating system, or from a `ca-file` you give (see [TLS](tls.md)).

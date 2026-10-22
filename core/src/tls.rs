@@ -2,8 +2,8 @@
 //!
 //! Endpoint settings: `insecure`, `ca-file`, `cert`, `key`, `server-name`,
 //! `server-spiffe-id`. Trust roots come from `ca-file` when it is set (as with
-//! curl's `--cacert`, it replaces the defaults), otherwise from the OS store,
-//! falling back to the bundled Mozilla roots. With `server-spiffe-id` the
+//! curl's `--cacert`, it replaces the defaults), otherwise from the operating
+//! system's store; pub carries none of its own. With `server-spiffe-id` the
 //! server is verified against `ca-file` only (the SPIFFE trust bundle) and
 //! identified by its SPIFFE ID instead of its hostname.
 //!
@@ -361,7 +361,7 @@ pub fn client_config(opts: &TlsOptions) -> Result<Arc<ClientConfig>> {
 }
 
 /// `ca-file` alone when set, so a private CA isn't undercut by every public
-/// one; otherwise the OS store, or the bundled Mozilla roots without one.
+/// one; otherwise the operating system's trusted roots.
 fn root_store(opts: &TlsOptions) -> Result<RootCertStore> {
     let mut roots = RootCertStore::empty();
     if let Some(ca) = &opts.ca_file {
@@ -371,9 +371,22 @@ fn root_store(opts: &TlsOptions) -> Result<RootCertStore> {
     let native = rustls_native_certs::load_native_certs();
     roots.add_parsable_certificates(native.certs);
     if roots.is_empty() {
-        roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
+        return Err(no_system_roots(&native.errors));
     }
     Ok(roots)
+}
+
+/// No trusted roots on this system (a `FROM scratch` container, say).
+fn no_system_roots(errors: &[rustls_native_certs::Error]) -> anyhow::Error {
+    let why = errors
+        .first()
+        .map(|e| format!(" ({e})"))
+        .unwrap_or_default();
+    err!(
+        Tls,
+        "no trusted CA certificates found on this system{why}: install them (e.g. the \
+         ca-certificates package) or set ca-file / --cacert"
+    )
 }
 
 fn add_ca_file(roots: &mut RootCertStore, ca: &Path, policy: &FilePolicy) -> Result<()> {
@@ -478,22 +491,7 @@ pub fn describe_io_error(e: &std::io::Error) -> String {
 
 /// The SPIFFE ID of an X.509-SVID: its single `spiffe://` URI SAN.
 pub fn spiffe_id_of(cert: &CertificateDer<'_>) -> std::result::Result<String, String> {
-    use x509_parser::prelude::{FromDer, GeneralName, X509Certificate};
-    let (_, parsed) = X509Certificate::from_der(cert.as_ref())
-        .map_err(|e| format!("cannot parse certificate: {e}"))?;
-    let san = parsed
-        .subject_alternative_name()
-        .map_err(|e| format!("bad subjectAltName: {e}"))?
-        .ok_or("certificate has no subjectAltName, so no SPIFFE ID")?;
-    let uris: Vec<&str> = san
-        .value
-        .general_names
-        .iter()
-        .filter_map(|n| match n {
-            GeneralName::URI(u) => Some(*u),
-            _ => None,
-        })
-        .collect();
+    let uris = san_uris(cert.as_ref())?;
     match uris.as_slice() {
         [id] if id.starts_with("spiffe://") => Ok(id.to_string()),
         [] => Err("certificate has no URI SAN, so no SPIFFE ID".into()),
@@ -503,6 +501,78 @@ pub fn spiffe_id_of(cert: &CertificateDer<'_>) -> std::result::Result<String, St
             many.len()
         )),
     }
+}
+
+/// One DER element: (tag, contents, what follows). `None` if it's truncated.
+fn der(b: &[u8]) -> Option<(u8, &[u8], &[u8])> {
+    let (&tag, b) = b.split_first()?;
+    let (&first, b) = b.split_first()?;
+    let (len, b) = if first < 0x80 {
+        (first as usize, b)
+    } else {
+        let n = (first & 0x7f) as usize;
+        if n == 0 || n > 4 {
+            return None;
+        }
+        let bytes = b.get(..n)?;
+        let len = bytes.iter().fold(0usize, |l, &x| (l << 8) | x as usize);
+        (len, b.get(n..)?)
+    };
+    Some((tag, b.get(..len)?, b.get(len..)?))
+}
+
+/// The URIs in a certificate's subjectAltName extension (RFC 5280 4.2.1.6).
+fn san_uris(cert: &[u8]) -> std::result::Result<Vec<&str>, String> {
+    const SEQUENCE: u8 = 0x30;
+    const EXTENSIONS: u8 = 0xa3; // [3] EXPLICIT in TBSCertificate
+    const SAN_OID: &[u8] = &[0x55, 0x1d, 0x11]; // 2.5.29.17
+    const URI: u8 = 0x86; // [6] IMPLICIT IA5String in GeneralName
+    let bad = || "cannot parse certificate".to_string();
+    let seq = |b| der(b).filter(|(t, ..)| *t == SEQUENCE).map(|(_, v, _)| v);
+
+    let tbs = seq(cert).and_then(seq).ok_or_else(bad)?;
+    let mut fields = tbs;
+    let mut extensions = None;
+    while !fields.is_empty() {
+        let (tag, value, rest) = der(fields).ok_or_else(bad)?;
+        if tag == EXTENSIONS {
+            extensions = Some(seq(value).ok_or_else(bad)?);
+        }
+        fields = rest;
+    }
+    let no_san = || "certificate has no subjectAltName, so no SPIFFE ID".to_string();
+    let mut list = extensions.ok_or_else(no_san)?;
+    let mut san = None;
+    while !list.is_empty() {
+        let (_, ext, rest) = der(list).ok_or_else(bad)?;
+        list = rest;
+        let (tag, oid, value) = der(ext).ok_or_else(bad)?;
+        if tag != 0x06 || oid != SAN_OID {
+            continue;
+        }
+        // An optional `critical` BOOLEAN, then the OCTET STRING.
+        let (mut tag, mut value, rest) = der(value).ok_or_else(bad)?;
+        if tag == 0x01 {
+            (tag, value, _) = der(rest).ok_or_else(bad)?;
+        }
+        if tag != 0x04 || san.replace(value).is_some() {
+            return Err("bad subjectAltName".into());
+        }
+    }
+    let mut names = seq(san.ok_or_else(no_san)?).ok_or("bad subjectAltName")?;
+    let mut uris = Vec::new();
+    while !names.is_empty() {
+        let (tag, value, rest) = der(names).ok_or("bad subjectAltName")?;
+        names = rest;
+        if tag == URI {
+            let uri = std::str::from_utf8(value)
+                .ok()
+                .filter(|u| u.is_ascii())
+                .ok_or("a URI SAN that isn't ASCII")?;
+            uris.push(uri);
+        }
+    }
+    Ok(uris)
 }
 
 #[derive(Debug)]
@@ -701,6 +771,46 @@ mod tests {
     }
 
     #[test]
+    fn spiffe_id_reads_the_uri_san() {
+        let ca = ca();
+        let cert = leaf(
+            &ca,
+            vec![
+                SanType::DnsName("a.example".try_into().unwrap()),
+                uri("spiffe://example.org/sa/broker"),
+            ],
+        );
+        assert_eq!(
+            spiffe_id_of(&cert).unwrap(),
+            "spiffe://example.org/sa/broker"
+        );
+        let none = leaf(&ca, vec![SanType::DnsName("a.example".try_into().unwrap())]);
+        assert!(spiffe_id_of(&none).unwrap_err().contains("no URI SAN"));
+        let two = leaf(&ca, vec![uri("spiffe://a/x"), uri("spiffe://a/y")]);
+        assert!(spiffe_id_of(&two).unwrap_err().contains("found 2"));
+    }
+
+    #[test]
+    fn spiffe_id_rejects_malformed_certificates() {
+        let ca = ca();
+        let good = leaf(&ca, vec![uri("spiffe://example.org/x")])
+            .as_ref()
+            .to_vec();
+        // Every truncation and a flipped byte at every position: an error or an ID, never a panic.
+        for n in 0..good.len() {
+            let _ = spiffe_id_of(&CertificateDer::from(good[..n].to_vec()));
+            let mut bad = good.clone();
+            bad[n] ^= 0xff;
+            let _ = spiffe_id_of(&CertificateDer::from(bad));
+        }
+        assert!(spiffe_id_of(&CertificateDer::from(vec![])).is_err());
+        assert!(spiffe_id_of(&CertificateDer::from(vec![
+            0x30, 0x84, 0xff, 0xff, 0xff, 0xff
+        ]))
+        .is_err());
+    }
+
+    #[test]
     fn ca_file_replaces_the_default_roots() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("ca.pem");
@@ -710,8 +820,11 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(root_store(&only_ca).unwrap().len(), 1);
-        // Without one: the OS store or the bundled roots, many of them.
+        // Without one: the operating system's store.
         assert!(root_store(&TlsOptions::default()).unwrap().len() > 1);
+        let e = no_system_roots(&[]);
+        assert_eq!(crate::exit_code(&e), 35);
+        assert!(format!("{e}").contains("ca-file"), "{e}");
     }
 
     #[test]

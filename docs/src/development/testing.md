@@ -68,7 +68,24 @@ cargo llvm-cov report --html --ignore-filename-regex '(mock\.rs|/tests/|tests\.r
 | features | `pub` with no modules, then each module and format alone, warnings as errors |
 | deny | `cargo deny check`: RustSec advisories, licenses, the ban on aws-lc and OpenSSL |
 | interop | the real-broker suite in Docker |
-| docs | regenerates the reference pages, checks they're committed, builds this book; on `main`, publishes it |
+| docs | regenerates the reference pages, checks they're committed, and builds this book |
 
 The weekly run catches new advisories even when the code hasn't changed. Run the workflow by hand
 with *azure_servicebus* ticked to include the Service Bus emulator.
+
+## Releases
+
+`.github/workflows/release.yml` runs when a version tag is pushed:
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+1. It checks the tag matches the workspace version in `Cargo.toml`, and runs the tests.
+2. It builds `pub` with the `dist` profile (link-time optimisation, stripped) for Linux x86_64 and
+   arm64 (statically linked with musl, so it runs on any distribution) and for macOS Intel and Apple
+   Silicon.
+3. It creates the GitHub release, with a `pub-<tag>-<target>.tar.gz` per platform (the binary,
+   `LICENSE` and `README.md`), its SHA-256 checksum, and notes generated from the commits.
+4. It publishes this book to GitHub Pages. Only releases publish the documentation; CI builds it but
+   doesn't publish it.

@@ -3,7 +3,7 @@ resolver = "2"
 members = ["core", "protocols/*", "formats/*", "cli"]
 
 [workspace.package]
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
 
@@ -32,6 +32,19 @@ rustls-native-certs = "0.8"
 socket2 = { version = "0.6", features = ["all"] }
 tempfile = "3"
 url = "2"
-x509-parser = "0.18"
+# url's Unicode host name (IDNA) support only applies to http-like schemes, never
+# to pub's: the no-op adapter keeps its tables out of the binary.
+idna_adapter = "=1.0.0"
 rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
-webpki-roots = "1"
+
+# Release binaries (`cargo build --profile dist`): built for size. pub waits on
+# the network, not the CPU, so `z` costs it little. pub catches no panics, so
+# `abort` changes nothing except that a panic at the password prompt would
+# leave the terminal's echo off (Ctrl-C and errors still restore it).
+[profile.dist]
+inherits = "release"
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
