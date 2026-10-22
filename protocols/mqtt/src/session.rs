@@ -21,6 +21,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::time::{Duration, Instant};
 
 use anyhow::Context as _;
+use pub_core::error::ErrorKind;
 use pub_core::{
     bail_kind, err, Codec, Connection, Context, Destination, Endpoint, Message, ReceiveOptions,
     Result, Session,
@@ -224,7 +225,18 @@ impl MqttSession {
             will,
         });
         conn.send(&connect)?;
-        let reply = conn.recv_reply("CONNACK").context("waiting for CONNACK")?;
+        let reply = conn
+            .recv_reply("CONNACK")
+            .map_err(|e| match pub_core::error::kind_of(&e) {
+                // Brokers that only know 3.1.1 hang up on an MQTT 5 CONNECT without a word.
+                Some(ErrorKind::Io) if v5 => err!(
+                    Io,
+                    "{e}: the broker may not speak MQTT 5 (ActiveMQ 5.x and 6.x speak 3.1.1); \
+                     try -O version=3.1.1"
+                ),
+                _ => e,
+            })
+            .context("waiting for CONNACK")?;
         let connack = match reply {
             Packet::ConnAck(c) if !v5 && c.reason != 0 => return Err(connack_error_311(c.reason)),
             Packet::ConnAck(c) if c.reason >= 0x80 => {
@@ -538,6 +550,26 @@ fn check_shared(filter: &str) -> Result<()> {
     }
 }
 
+/// MQTT 4.7.1: `#` only as the whole last level, `+` only as a whole level.
+fn check_topic_filter(filter: &str) -> Result<()> {
+    if filter.is_empty() {
+        bail_kind!(Usage, "MQTT topic filter is empty");
+    }
+    let levels: Vec<&str> = filter.split('/').collect();
+    for (i, level) in levels.iter().enumerate() {
+        let bad = (level.contains('#') && (*level != "#" || i + 1 != levels.len()))
+            || (level.contains('+') && *level != "+");
+        if bad {
+            bail_kind!(
+                Usage,
+                "'{filter}' isn't a valid MQTT topic filter: '#' must be a whole last level and '+' a \
+                 whole level (in a URL, put settings before the '#' or use -O)"
+            );
+        }
+    }
+    Ok(())
+}
+
 fn check_topic_name(topic: &str) -> Result<()> {
     if topic.is_empty() {
         bail_kind!(Usage, "MQTT topic is empty");
@@ -720,6 +752,11 @@ impl Session for MqttSession {
             None => destination.name.clone(),
         };
         check_shared(&filter)?;
+        check_topic_filter(
+            filter
+                .strip_prefix("$share/")
+                .map_or(&filter, |r| r.split_once('/').map_or(r, |(_, f)| f)),
+        )?;
         if filter.starts_with("$share/")
             && self.connack.props.num(prop::SHARED_SUBSCRIPTION_AVAILABLE) == Some(0)
         {
@@ -881,6 +918,21 @@ impl Drop for MqttSession {
     fn drop(&mut self) {
         if !self.closed {
             self.conn.shutdown();
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::check_topic_filter;
+
+    #[test]
+    fn topic_filters_follow_the_wildcard_rules() {
+        for ok in ["#", "a/#", "a/+/c", "+", "+/+", "a/b", "/#", "a//b"] {
+            assert!(check_topic_filter(ok).is_ok(), "{ok}");
+        }
+        for bad in ["", "a/#/c", "a#", "a/#?version=3.1.1", "a/b+", "+a/b", "##"] {
+            assert!(check_topic_filter(bad).is_err(), "{bad}");
         }
     }
 }

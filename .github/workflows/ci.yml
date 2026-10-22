@@ -93,7 +93,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      # ActiveMQ Classic, Artemis, RabbitMQ and Mosquitto in Docker (see interop/run.sh).
+      # ActiveMQ, Artemis, RabbitMQ and Mosquitto in Docker (see interop/run.sh).
       - name: interop suite
         env:
           AZURE_SERVICEBUS: ${{ inputs.azure_servicebus && '1' || '' }}

@@ -1,5 +1,5 @@
 // Interop helper for interop/run.sh: a plain ActiveMQ JMS client (OpenWire),
-// compiled against the jars of the ActiveMQ Classic image under test.
+// compiled against the jars of the ActiveMQ image under test.
 // Usage: JP <brokerUrl> <queue> [user password]
 // Sends a TextMessage with every JMS header and property type, a BytesMessage
 // and a MapMessage. Add ?jms.useCompression=true to the URL to compress them.

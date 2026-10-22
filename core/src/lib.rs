@@ -17,6 +17,7 @@ pub mod payload;
 pub mod process;
 pub mod secrets;
 pub mod settings;
+pub mod sniff;
 pub mod strategy;
 pub mod tls;
 pub mod trace;

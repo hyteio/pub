@@ -115,9 +115,10 @@ const SETTINGS: &[Setting] = &[
     setting("jms.closeTimeout", SettingType::Count, Some("15000"), "ms to wait for the broker to acknowledge close"),
     setting(
         "broker-type",
-        SettingType::OneOf(&["auto", "classic", "artemis"]),
+        // `classic` is the name 1.0.0 and 1.0.1 used for `activemq`.
+        SettingType::OneOf(&["auto", "activemq", "artemis", "classic"]),
         Some("auto"),
-        "which ActiveMQ broker (for destination management): auto = from the broker's id",
+        "which broker, for destination management: activemq, artemis, or auto = from the broker's id (classic = activemq)",
     ),
     setting(
         "jms.useAsyncSend",

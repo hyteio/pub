@@ -4,15 +4,19 @@ use std::io::{self, Read, Write};
 use std::time::{Duration, Instant};
 
 use crate::endpoint::Endpoint;
-use crate::error::Result;
+use crate::error::{kind_of, Error, Result};
 use crate::limits::{human, Limits};
 use crate::module::SchemeInfo;
+use crate::sniff;
 use crate::trace::Trace;
 use crate::transport::{self, describe_timeout, SocketOptions, Stream};
 use crate::{bail_kind, err};
 
 /// Bytes a frame's header may add to `max-frame-size` while it is buffered.
 const FRAME_HEADER_ALLOWANCE: usize = 64;
+
+/// How much of the server's first bytes to keep, to recognise the wrong protocol.
+const FIRST_BYTES: usize = 16;
 
 /// Result of trying to decode the front of the read buffer.
 #[derive(Debug, PartialEq)]
@@ -49,6 +53,9 @@ pub struct Connection<C: Codec> {
     limits: Limits,
     rbuf: Vec<u8>,
     wbuf: Vec<u8>,
+    /// The start of what the server sent, until the first frame decodes.
+    first: Vec<u8>,
+    framed: bool,
 }
 
 impl<C: Codec> Connection<C> {
@@ -75,6 +82,8 @@ impl<C: Codec> Connection<C> {
             limits: Limits::default(),
             rbuf: Vec::with_capacity(16 * 1024),
             wbuf: Vec::new(),
+            first: Vec::new(),
+            framed: false,
         }
     }
 
@@ -149,10 +158,24 @@ impl<C: Codec> Connection<C> {
 
     /// Wait until `deadline` (forever if `None`) for the next frame. `Ok(None)` means timed out.
     pub fn recv_until(&mut self, deadline: Option<Instant>) -> Result<Option<C::Frame>> {
+        let result = self.read_frame(deadline);
+        if self.framed {
+            return result;
+        }
+        // Nothing has made sense yet: say so if the server speaks another protocol (an amqp://
+        // URL pointed at ActiveMQ's OpenWire port, say).
+        result.map_err(|e| match (sniff::hint(&self.first), kind_of(&e)) {
+            (hint, Some(kind)) if !hint.is_empty() => Error::new(kind, format!("{e}{hint}")).into(),
+            _ => e,
+        })
+    }
+
+    fn read_frame(&mut self, deadline: Option<Instant>) -> Result<Option<C::Frame>> {
         let mut chunk = [0u8; 16 * 1024];
         loop {
             match self.codec.decode(&self.rbuf)? {
                 Decoded::Frame(frame, n) => {
+                    self.framed = true;
                     self.trace.wire_in(&self.rbuf[..n]);
                     self.rbuf.drain(..n);
                     return Ok(Some(frame));
@@ -198,7 +221,13 @@ impl<C: Codec> Connection<C> {
 
             match self.stream.read(&mut chunk) {
                 Ok(0) => bail_kind!(Io, "connection closed by server"),
-                Ok(n) => self.rbuf.extend_from_slice(&chunk[..n]),
+                Ok(n) => {
+                    if !self.framed && self.first.len() < FIRST_BYTES {
+                        let keep = n.min(FIRST_BYTES - self.first.len());
+                        self.first.extend_from_slice(&chunk[..keep]);
+                    }
+                    self.rbuf.extend_from_slice(&chunk[..n]);
+                }
                 Err(e)
                     if matches!(
                         e.kind(),
@@ -221,5 +250,79 @@ impl<C: Codec> Connection<C> {
 
     pub fn shutdown(&mut self) {
         self.stream.shutdown();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::{TcpListener, TcpStream};
+
+    /// A protocol whose only frame is `OK!!`.
+    struct Ok4;
+
+    impl Codec for Ok4 {
+        type Frame = ();
+        fn encode(&mut self, _: &(), _: &mut Vec<u8>) -> Result<()> {
+            Ok(())
+        }
+        fn decode(&mut self, buf: &[u8]) -> Result<Decoded<()>> {
+            match buf {
+                [b'O', b'K', b'!', b'!', ..] => Ok(Decoded::Frame((), 4)),
+                b if b"OK!!".starts_with(b) => Ok(Decoded::NeedMore),
+                _ => bail_kind!(Protocol, "malformed"),
+            }
+        }
+    }
+
+    /// A connection to a server that sends `bytes` and closes.
+    fn server_sending(bytes: &'static [u8]) -> Connection<Ok4> {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        std::thread::spawn(move || {
+            let (mut s, _) = listener.accept().unwrap();
+            s.write_all(bytes).unwrap();
+        });
+        let stream = Stream::Plain(TcpStream::connect(addr).unwrap());
+        Connection::new(stream, Ok4, Trace::default())
+    }
+
+    fn recv(c: &mut Connection<Ok4>) -> std::result::Result<(), String> {
+        match c.recv(Some(Duration::from_secs(5))) {
+            Ok(Some(())) => Ok(()),
+            Ok(None) => Err("timed out".into()),
+            Err(e) => Err(format!("{e}")),
+        }
+    }
+
+    #[test]
+    fn names_the_protocol_a_confusing_server_speaks() {
+        let mut c = server_sending(b"HTTP/1.1 400 Bad Request\r\n");
+        assert_eq!(
+            recv(&mut c).unwrap_err(),
+            "malformed: the server looks like an HTTP server"
+        );
+
+        // OpenWire's greeting, then the close: the hint survives an I/O error too.
+        let mut c = server_sending(b"\x00\x00\x01\x51\x01ActiveMQ");
+        let e = recv(&mut c).unwrap_err();
+        assert!(
+            e.starts_with("malformed: the server looks like an ActiveMQ OpenWire port"),
+            "{e}"
+        );
+        assert_eq!(
+            kind_of(&c.recv(None).unwrap_err()),
+            Some(crate::error::ErrorKind::Protocol)
+        );
+    }
+
+    #[test]
+    fn no_hint_for_unknown_bytes_or_once_framed() {
+        let mut c = server_sending(b"OK");
+        assert_eq!(recv(&mut c).unwrap_err(), "connection closed by server");
+
+        let mut c = server_sending(b"OK!!HTTP/1.1");
+        assert_eq!(recv(&mut c), Ok(()));
+        assert_eq!(recv(&mut c).unwrap_err(), "malformed");
     }
 }

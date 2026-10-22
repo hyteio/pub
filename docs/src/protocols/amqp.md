@@ -79,3 +79,8 @@ copy (RabbitMQ's classic queues) would consume instead, so pub refuses.
 ActiveMQ converts AMQP messages for JMS clients only with `transport.transformer=jms` on its `amqp`
 connector. Its default is `native`, where OpenWire and JMS consumers see the raw AMQP bytes as a
 BytesMessage. Its scheduler (`schedulerSupport="true"`) must be on for `delivery-delay`.
+
+ActiveMQ's default `activemq.xml` has the `amqp` connector (port 5672) commented out; un-comment it
+to use `amqp://`. Pointed at the OpenWire port (61616) instead, pub says the server "looks like an
+ActiveMQ OpenWire port", and the broker logs `Frame size of 1 GB is larger than max allowed`: it
+read pub's `AMQP` header as an OpenWire frame length. Use `amq://` for that port.

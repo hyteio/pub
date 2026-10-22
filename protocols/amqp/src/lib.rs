@@ -1,4 +1,4 @@
-//! AMQP 1.0 module for pub (`amqp://`, `amqps://`): ActiveMQ Classic and
+//! AMQP 1.0 module for pub (`amqp://`, `amqps://`): ActiveMQ and
 //! Artemis, RabbitMQ 4, Qpid, Azure Service Bus, Solace, ...
 //!
 //! Written from the OASIS AMQP 1.0 specification; message bodies and fields

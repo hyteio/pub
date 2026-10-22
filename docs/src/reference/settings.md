@@ -98,7 +98,7 @@ Destination options, passed through to the broker:
 | `wireFormat.maxInactivityDurationInitalDelay` | count | `10000` | ms before the inactivity monitor starts (Java's spelling, 'Inital') |
 | `jms.connectResponseTimeout` | count | `0` | ms to wait for the broker to accept the connection (0 = receive-timeout) |
 | `jms.closeTimeout` | count | `15000` | ms to wait for the broker to acknowledge close |
-| `broker-type` | choice | `auto` | which ActiveMQ broker (for destination management): auto = from the broker's id |
+| `broker-type` | choice | `auto` | which broker, for destination management: activemq, artemis, or auto = from the broker's id (classic = activemq) |
 | `jms.useAsyncSend` | bool | `false` | send persistent messages without waiting for the broker (non-persistent ones always are) |
 | `jms.alwaysSyncSend` | bool | `false` | wait for the broker on every send, persistent or not |
 | `jms.sendTimeout` | count | `0` | ms to wait for the broker to accept a message; &gt; 0 makes every send synchronous (0 = receive-timeout) |

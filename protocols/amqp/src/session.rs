@@ -125,7 +125,7 @@ pub struct AmqpSession {
     credit: u32,
     follows_count: bool,
     next_message: u64,
-    /// Address prefixes the broker advertised (ActiveMQ Classic).
+    /// Address prefixes the broker advertised (ActiveMQ).
     prefixes: Prefixes,
     /// The open transaction's id.
     txn: Option<Vec<u8>>,

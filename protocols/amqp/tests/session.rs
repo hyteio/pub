@@ -210,7 +210,7 @@ fn browse_and_brokers_that_cannot() {
 
 #[test]
 fn selectors_durable_subscriptions_and_prefixes() {
-    // ActiveMQ Classic style: advertised prefixes go on queue and topic addresses.
+    // ActiveMQ style: advertised prefixes go on queue and topic addresses.
     let broker = MockBroker::start(MockConfig {
         prefixes: true,
         ..Default::default()

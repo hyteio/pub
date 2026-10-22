@@ -156,7 +156,7 @@ impl Endpoint {
         cfg: &Config,
         module_for: &dyn Fn(&str) -> Option<&'static str>,
     ) -> Result<Self> {
-        let target = target.trim();
+        let target = &*query_before_fragment(target.trim());
         if target.is_empty() {
             bail_kind!(Usage, "empty target");
         }
@@ -348,6 +348,7 @@ impl Endpoint {
 
     /// Build an endpoint from a URL alone (no configuration).
     pub fn parse(url: &str) -> Result<Self> {
+        let url = &*query_before_fragment(url);
         let mut ep = Self::from_url(&parse_url(url)?)?;
         ep.target = redact_userinfo(url);
         Ok(ep)
@@ -483,6 +484,19 @@ impl Endpoint {
     }
 }
 
+/// `mqtt://host/sensors/#?qos=1`: in a URL the `?qos=1` would be part of the fragment (and so of
+/// the MQTT topic filter), but a `#` wildcard ends a topic, so a `?` after it can only be meant as
+/// the query. Move it in front of the `#`, when there's no query already.
+fn query_before_fragment(s: &str) -> std::borrow::Cow<'_, str> {
+    match s.split_once('#') {
+        Some((head, frag)) if !head.contains('?') => match frag.split_once('?') {
+            Some((frag, query)) => format!("{head}?{query}#{frag}").into(),
+            None => s.into(),
+        },
+        _ => s.into(),
+    }
+}
+
 fn parse_url(s: &str) -> Result<Url> {
     let url =
         Url::parse(s).map_err(|e| err!(Config, "invalid URL '{}': {e}", redact_userinfo(s)))?;
@@ -589,6 +603,24 @@ mod tests {
             entries: crate::config::parse(text, Path::new("t")).unwrap(),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn a_query_after_the_wildcard_is_the_query() {
+        let ep = Endpoint::parse("mqtt://h/sensors/#?version=3.1.1").unwrap();
+        assert_eq!(
+            (ep.path.as_str(), ep.fragment.as_deref()),
+            ("/sensors/", Some(""))
+        );
+        assert_eq!(ep.prop("version"), Some("3.1.1"));
+        // An explicit query keeps a later `?` in the fragment.
+        let ep = Endpoint::parse("mqtt://h/a?qos=1#b?c").unwrap();
+        assert_eq!(
+            (ep.prop("qos"), ep.fragment.as_deref()),
+            (Some("1"), Some("b?c"))
+        );
+        assert_eq!(query_before_fragment("stomp://h/q"), "stomp://h/q");
+        assert_eq!(query_before_fragment("prod/s/#?qos=1"), "prod/s/?qos=1#");
     }
 
     #[test]

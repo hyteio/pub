@@ -4,7 +4,7 @@
 //! per connection, sender and receiver links with credit, drain, copy
 //! distribution (browsing, unless `no_copy` — like RabbitMQ's classic queues),
 //! durable subscriptions by (container id, link name) with lookup by name, and
-//! ActiveMQ Classic's advertised `queue-prefix` / `topic-prefix` when
+//! ActiveMQ's advertised `queue-prefix` / `topic-prefix` when
 //! `prefixes` is set. Queues and topics share one namespace keyed by address;
 //! topics behave like queues. Messages are kept for inspection.
 //! Transactions: a coordinator link declares and discharges them; sends and
@@ -29,7 +29,7 @@ use crate::types::Value;
 pub struct MockConfig {
     /// Require PLAIN with these credentials (and refuse ANONYMOUS).
     pub credentials: Option<(String, String)>,
-    /// Advertise `queue://` / `topic://` prefixes, as ActiveMQ Classic does.
+    /// Advertise `queue://` / `topic://` prefixes, as ActiveMQ does.
     pub prefixes: bool,
     /// Ignore copy distribution (RabbitMQ classic queues).
     pub no_copy: bool,

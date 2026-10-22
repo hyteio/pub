@@ -108,7 +108,7 @@ impl Module for StompModule {
         true
     }
 
-    /// ActiveMQ Classic and Artemis: `activemq.subscriptionName` /
+    /// ActiveMQ and Artemis: `activemq.subscriptionName` /
     /// `durable-subscription-name` with a client-id.
     fn durable_subscriptions(&self) -> bool {
         true

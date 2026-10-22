@@ -449,7 +449,13 @@ pub fn handshake(
                 _ => {
                     // TLS 1.2 also uses the group list to say which curves the client can
                     // verify ECDSA certificates on; a narrow list can rule out the server's cert.
-                    let hint = if opts.groups.is_some() && opts.min_version == TlsVersion::V1_2 {
+                    let not_tls = matches!(
+                        e.get_ref().and_then(|i| i.downcast_ref::<rustls::Error>()),
+                        Some(rustls::Error::InvalidMessage(_))
+                    );
+                    let hint = if not_tls {
+                        ": the server didn't answer with TLS; is this a plain-text port?"
+                    } else if opts.groups.is_some() && opts.min_version == TlsVersion::V1_2 {
                         " (with TLS 1.2, tls-groups must include the curve of the server's ECDSA certificate, usually secp256r1)"
                     } else {
                         ""

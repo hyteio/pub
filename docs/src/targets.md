@@ -41,7 +41,8 @@ pub send 'jms.company.com/queue/orders?jms.useAsyncSend=true' -d hi
 ```
 
 The path after an alias can't contain `.` or `..` segments, and a `#` is kept as the URL's
-fragment (MQTT reads it as the multi-level wildcard).
+fragment (MQTT reads it as the multi-level wildcard). A `?` after the `#` starts the query, as
+it would before it: `sensors/#?qos=1`.
 
 | Command | Does |
 |---|---|

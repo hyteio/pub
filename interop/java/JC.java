@@ -1,5 +1,5 @@
 // Interop helper for interop/run.sh: a plain ActiveMQ JMS client (OpenWire),
-// compiled against the jars of the ActiveMQ Classic image under test.
+// compiled against the jars of the ActiveMQ image under test.
 // Usage: JC <brokerUrl> <queue> [user password]
 // Prints one line per message (body, JMS headers, typed properties) until the
 // queue is idle for 2s.

@@ -69,7 +69,7 @@ struct State {
     commits: usize,
     rollbacks: usize,
     /// Destinations the broker knows (`queue://x`, `topic://x`), as ActiveMQ
-    /// Classic announces them on its advisory topics.
+    /// ActiveMQ announces them on its advisory topics.
     destinations: std::collections::BTreeSet<String>,
 }
 
@@ -477,7 +477,7 @@ impl MockSession {
                                 .unwrap_or_default();
                             (snapshot, 0, false)
                         });
-                        // Classic's advisory topics replay the known destinations.
+                        // ActiveMQ's advisory topics replay the known destinations.
                         let advisory_kind = match dest.as_str() {
                             "topic://ActiveMQ.Advisory.Queue" => Some("queue://"),
                             "topic://ActiveMQ.Advisory.Topic" => Some("topic://"),

@@ -1,5 +1,5 @@
 //! Real-broker tests, ignored by default: `interop/run.sh` starts ActiveMQ
-//! Classic and Artemis (plain, TLS and mutual-TLS OpenWire, Classic's STOMP),
+//! ActiveMQ and Artemis (plain, TLS and mutual-TLS OpenWire, ActiveMQ's STOMP),
 //! compiles the Java helpers in `interop/java`, sets the `PUB_IT_*` variables
 //! and runs these with `--ignored`.
 //!
@@ -30,10 +30,10 @@ struct Broker {
 fn brokers() -> Vec<Broker> {
     vec![
         Broker {
-            name: "classic",
-            url: env("PUB_IT_CLASSIC"),
-            tls: env("PUB_IT_CLASSIC_TLS"),
-            java: env("PUB_IT_CLASSIC_JAVA"),
+            name: "activemq",
+            url: env("PUB_IT_ACTIVEMQ"),
+            tls: env("PUB_IT_ACTIVEMQ_TLS"),
+            java: env("PUB_IT_ACTIVEMQ_JAVA"),
             java_creds: &[],
         },
         Broker {
@@ -162,8 +162,8 @@ fn tls_server_auth_versions_and_trust() {
 
 #[test]
 #[ignore]
-fn tls_mutual_auth_on_classic() {
-    let (ca, url) = (ca(), env("PUB_IT_CLASSIC_MTLS"));
+fn tls_mutual_auth_on_activemq() {
+    let (ca, url) = (ca(), env("PUB_IT_ACTIVEMQ_MTLS"));
     let cert = format!("cert={}", env("PUB_IT_CLIENT_CERT"));
     let key = format!("key={}", env("PUB_IT_CLIENT_KEY"));
     // The listener requires a client certificate.
@@ -459,8 +459,8 @@ fn replay_header_strategies() {
                 assert_eq!(c["fields"][f], original[f], "{}: {f}", b.name);
             }
         }
-        // Classic's duplicate detection drops a repeated id; Artemis keeps it.
-        let expected = if b.name == "classic" { 1 } else { 2 };
+        // ActiveMQ's duplicate detection drops a repeated id; Artemis keeps it.
+        let expected = if b.name == "activemq" { 1 } else { 2 };
         assert_eq!(copies.len(), expected, "{}", b.name);
     }
 }
@@ -469,8 +469,8 @@ fn replay_header_strategies() {
 
 #[test]
 #[ignore]
-fn stomp_and_openwire_on_classic() {
-    let (amq, stomp) = (env("PUB_IT_CLASSIC"), env("PUB_IT_CLASSIC_STOMP"));
+fn stomp_and_openwire_on_activemq() {
+    let (amq, stomp) = (env("PUB_IT_ACTIVEMQ"), env("PUB_IT_ACTIVEMQ_STOMP"));
     let q = unique("cross");
     ok(&[
         "send",
@@ -776,7 +776,7 @@ fn destination_lifecycle() {
         };
         thread::sleep(Duration::from_millis(1500));
         let o = pub_cmd(&["dest", "delete", &busy], None);
-        // Classic: JMSException "still has an active subscription"; Artemis: "it has consumers".
+        // ActiveMQ: JMSException "still has an active subscription"; Artemis: "it has consumers".
         assert_eq!(o.status.code(), Some(8), "{}: {}", b.name, stderr(&o));
         assert!(
             stderr(&o).contains("refused delete"),
@@ -849,9 +849,9 @@ fn xml_capture_replays_to_the_java_client() {
 fn stomp_brokers() -> Vec<(&'static str, String, String, &'static [&'static str])> {
     vec![
         (
-            "classic",
-            env("PUB_IT_CLASSIC_STOMP"),
-            env("PUB_IT_CLASSIC_JAVA"),
+            "activemq",
+            env("PUB_IT_ACTIVEMQ_STOMP"),
+            env("PUB_IT_ACTIVEMQ_JAVA"),
             &[],
         ),
         (
@@ -1012,11 +1012,11 @@ fn stomp_heart_beats_browse_and_durable() {
         );
         ok(&["unsubscribe", &topic, "--durable", "audit", "-O", &client]);
 
-        // Browsing: Classic only, and the queue is untouched.
+        // Browsing: ActiveMQ only, and the queue is untouched.
         let q = format!("{url}/queue/{}", unique("stomp-browse"));
         ok(&["send", &q, "-d", "b1"]);
         ok(&["send", &q, "-d", "b2"]);
-        if name == "classic" {
+        if name == "activemq" {
             assert_eq!(ok(&["browse", &q, "--lines"]), "b1\nb2\n");
             assert_eq!(ok(&["browse", &q, "-n", "1"]), "b1");
         } else {
@@ -1152,7 +1152,7 @@ fn stomp_tls_and_auth() {
     let ca = ca();
     let tls = format!(
         "{}/queue/{}",
-        env("PUB_IT_CLASSIC_STOMP_TLS"),
+        env("PUB_IT_ACTIVEMQ_STOMP_TLS"),
         unique("stomp-tls")
     );
     ok(&["send", &tls, "-O", &ca, "-d", "over tls"]);
@@ -1165,12 +1165,12 @@ fn stomp_tls_and_auth() {
 
 // ---- MQTT
 
-/// MQTT endpoints and the versions each speaks (Classic: 3.1.1 only).
+/// MQTT endpoints and the versions each speaks (ActiveMQ: 3.1.1 only).
 fn mqtt_brokers() -> Vec<(&'static str, String, &'static [&'static str])> {
     vec![
         ("mosquitto", env("PUB_IT_MOSQUITTO"), &["5", "3.1.1"]),
         ("artemis", env("PUB_IT_ARTEMIS_MQTT"), &["5", "3.1.1"]),
-        ("classic", env("PUB_IT_CLASSIC_MQTT"), &["3.1.1"]),
+        ("activemq", env("PUB_IT_ACTIVEMQ_MQTT"), &["3.1.1"]),
     ]
 }
 
@@ -1419,8 +1419,8 @@ fn mqtt_wills_shared_subscriptions_and_topic_aliases() {
             }
 
             // Shared subscriptions: each message to one member of the group.
-            if name == "classic" {
-                continue; // no $share in ActiveMQ Classic's MQTT
+            if name == "activemq" {
+                continue; // no $share in ActiveMQ's MQTT
             }
             let jobs = format!("{base}/jobs");
             let member = || {
@@ -1527,7 +1527,11 @@ fn mqtt_tls_and_auth_on_mosquitto() {
 fn mqtt_and_openwire_meet_on_the_same_topic() {
     // ActiveMQ maps MQTT's '/' to JMS's '.'.
     for (name, mqtt, amq) in [
-        ("classic", env("PUB_IT_CLASSIC_MQTT"), env("PUB_IT_CLASSIC")),
+        (
+            "activemq",
+            env("PUB_IT_ACTIVEMQ_MQTT"),
+            env("PUB_IT_ACTIVEMQ"),
+        ),
         ("artemis", env("PUB_IT_ARTEMIS_MQTT"), env("PUB_IT_ARTEMIS")),
     ] {
         let base = unique("cross").replace('.', "-");
@@ -1577,6 +1581,51 @@ fn mqtt_and_openwire_meet_on_the_same_topic() {
     }
 }
 
+/// ActiveMQ speaks MQTT 3.1.1 only: options in the URL after a `#` wildcard still apply, and
+/// pub's MQTT 5 default gets a hint instead of a bare "connection closed".
+#[test]
+#[ignore]
+fn mqtt_activemq_wildcard_url_and_version_hint() {
+    let mqtt = env("PUB_IT_ACTIVEMQ_MQTT");
+    let base = unique("wild").replace('.', "-");
+    let l = listen(vec![
+        "recv".into(),
+        format!("{mqtt}/{base}/#?version=3.1.1"),
+        "-m".into(),
+        "10s".into(),
+    ]);
+    ok(&[
+        "send",
+        &format!("{mqtt}/{base}/kitchen?version=3.1.1"),
+        "-d",
+        "21.5",
+    ]);
+    let o = l.join().unwrap();
+    assert_eq!(String::from_utf8_lossy(&o.stdout), "21.5", "{}", stderr(&o));
+
+    let o = pub_cmd(&["ping", &mqtt], None);
+    assert!(!o.status.success());
+    assert!(
+        stderr(&o).contains("try -O version=3.1.1"),
+        "{}",
+        stderr(&o)
+    );
+}
+
+/// An amqp:// URL pointed at ActiveMQ's OpenWire port says so.
+#[test]
+#[ignore]
+fn wrong_port_names_the_protocol() {
+    let openwire = env("PUB_IT_ACTIVEMQ").replacen("amq://", "amqp://", 1);
+    let o = pub_cmd(&["ping", &openwire], None);
+    assert!(!o.status.success());
+    assert!(
+        stderr(&o).contains("the server looks like an ActiveMQ OpenWire port"),
+        "{}",
+        stderr(&o)
+    );
+}
+
 // ---- AMQP 1.0
 
 /// The same broker over OpenWire, for the Java client: (URL, credentials).
@@ -1586,9 +1635,9 @@ type JavaSide = Option<(String, &'static [&'static str])>;
 fn amqp_brokers() -> Vec<(&'static str, String, JavaSide)> {
     vec![
         (
-            "classic",
-            env("PUB_IT_CLASSIC_AMQP"),
-            Some((env("PUB_IT_CLASSIC_JAVA"), &[][..])),
+            "activemq",
+            env("PUB_IT_ACTIVEMQ_AMQP"),
+            Some((env("PUB_IT_ACTIVEMQ_JAVA"), &[][..])),
         ),
         (
             "artemis",
@@ -1968,9 +2017,9 @@ fn amqp_rabbitmq_specifics_and_tls() {
     );
     assert_eq!(o.status.code(), Some(67), "{}", stderr(&o));
 
-    // AMQP over TLS on Classic.
+    // AMQP over TLS on ActiveMQ.
     let ca = ca();
-    let tls = format!("{}/queue/{}", env("PUB_IT_CLASSIC_AMQPS"), unique("amqps"));
+    let tls = format!("{}/queue/{}", env("PUB_IT_ACTIVEMQ_AMQPS"), unique("amqps"));
     ok(&["send", &tls, "-O", &ca, "-d", "over tls"]);
     assert_eq!(ok(&["recv", &tls, "-O", &ca, "-m", "5s"]), "over tls");
     assert_eq!(code(&["ping", &tls]), Some(35));

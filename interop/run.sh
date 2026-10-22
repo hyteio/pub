@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Real-broker test suite for pub (opt-in; needs Docker, a JDK and openssl).
 #
-# Starts ActiveMQ Classic and Artemis (OpenWire plain / TLS / mutual TLS, STOMP,
-# STOMP over TLS, MQTT, AMQP 1.0, Classic's AMQP over TLS), RabbitMQ 4 (AMQP
+# Starts ActiveMQ and Artemis (OpenWire plain / TLS / mutual TLS, STOMP,
+# STOMP over TLS, MQTT, AMQP 1.0, ActiveMQ's AMQP over TLS), RabbitMQ 4 (AMQP
 # 1.0) and Mosquitto (MQTT plain / TLS / password), compiles
-# the Java interop helpers against Classic's own client jars, then runs the
+# the Java interop helpers against ActiveMQ's own client jars, then runs the
 # ignored tests in cli/tests/brokers.rs against them. Everything is torn down
 # afterwards.
 #
@@ -31,7 +31,7 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(dirname "$here")"
 work="$(mktemp -d "${TMPDIR:-/tmp}/pub-interop.XXXXXX")"
-classic_image="${ACTIVEMQ_IMAGE:-apache/activemq:6.3.2}"
+activemq_image="${ACTIVEMQ_IMAGE:-apache/activemq:6.3.2}"
 artemis_image="${ARTEMIS_IMAGE:-apache/activemq-artemis:latest}"
 mosquitto_image="${MOSQUITTO_IMAGE:-eclipse-mosquitto:2}"
 rabbitmq_image="${RABBITMQ_IMAGE:-rabbitmq:4-management}"
@@ -39,17 +39,17 @@ servicebus_image="${AZURE_SERVICEBUS_IMAGE:-mcr.microsoft.com/azure-messaging/se
 mssql_image="${AZURE_MSSQL_IMAGE:-mcr.microsoft.com/mssql/server:2022-latest}"
 pw=changeit
 # Host ports: OpenWire plain / TLS / mTLS, STOMP.
-CLASSIC_PORT=${CLASSIC_PORT:-61716} CLASSIC_TLS_PORT=${CLASSIC_TLS_PORT:-61717}
-CLASSIC_MTLS_PORT=${CLASSIC_MTLS_PORT:-61718} CLASSIC_STOMP_PORT=${CLASSIC_STOMP_PORT:-61713}
-CLASSIC_STOMP_TLS_PORT=${CLASSIC_STOMP_TLS_PORT:-61712} CLASSIC_MQTT_PORT=${CLASSIC_MQTT_PORT:-61783}
+ACTIVEMQ_PORT=${ACTIVEMQ_PORT:-61716} ACTIVEMQ_TLS_PORT=${ACTIVEMQ_TLS_PORT:-61717}
+ACTIVEMQ_MTLS_PORT=${ACTIVEMQ_MTLS_PORT:-61718} ACTIVEMQ_STOMP_PORT=${ACTIVEMQ_STOMP_PORT:-61713}
+ACTIVEMQ_STOMP_TLS_PORT=${ACTIVEMQ_STOMP_TLS_PORT:-61712} ACTIVEMQ_MQTT_PORT=${ACTIVEMQ_MQTT_PORT:-61783}
 ARTEMIS_PORT=${ARTEMIS_PORT:-61726} ARTEMIS_TLS_PORT=${ARTEMIS_TLS_PORT:-61727}
 ARTEMIS_STOMP_PORT=${ARTEMIS_STOMP_PORT:-61723} ARTEMIS_MQTT_PORT=${ARTEMIS_MQTT_PORT:-61793}
 MOSQUITTO_PORT=${MOSQUITTO_PORT:-61883} MOSQUITTO_TLS_PORT=${MOSQUITTO_TLS_PORT:-61884}
 MOSQUITTO_AUTH_PORT=${MOSQUITTO_AUTH_PORT:-61885}
-CLASSIC_AMQP_PORT=${CLASSIC_AMQP_PORT:-61772} CLASSIC_AMQPS_PORT=${CLASSIC_AMQPS_PORT:-61771}
+ACTIVEMQ_AMQP_PORT=${ACTIVEMQ_AMQP_PORT:-61772} ACTIVEMQ_AMQPS_PORT=${ACTIVEMQ_AMQPS_PORT:-61771}
 ARTEMIS_AMQP_PORT=${ARTEMIS_AMQP_PORT:-61773} RABBITMQ_AMQP_PORT=${RABBITMQ_AMQP_PORT:-61774}
 AZURE_SERVICEBUS_PORT=${AZURE_SERVICEBUS_PORT:-61775} AZURE_SERVICEBUS_HTTP_PORT=${AZURE_SERVICEBUS_HTTP_PORT:-61776}
-containers="pub-it-classic pub-it-artemis pub-it-mosquitto pub-it-rabbitmq pub-it-servicebus pub-it-sb-sql"
+containers="pub-it-activemq pub-it-artemis pub-it-mosquitto pub-it-rabbitmq pub-it-servicebus pub-it-sb-sql"
 
 for tool in docker java javac keytool openssl curl; do
   command -v "$tool" >/dev/null || { echo "interop: $tool is required" >&2; exit 1; }
@@ -91,10 +91,10 @@ chmod 644 server.p12 trust.p12
 chmod 755 "$certs"
 
 echo "interop: broker configuration"
-mkdir -p "$work/classic" "$work/artemis"
-docker run --rm --entrypoint cat "$classic_image" /opt/apache-activemq/conf/activemq.xml \
-  > "$work/classic/activemq.xml"
-python3 - "$work/classic/activemq.xml" <<PY
+mkdir -p "$work/activemq" "$work/artemis"
+docker run --rm --entrypoint cat "$activemq_image" /opt/apache-activemq/conf/activemq.xml \
+  > "$work/activemq/activemq.xml"
+python3 - "$work/activemq/activemq.xml" <<PY
 import re, sys
 p = sys.argv[1]; s = open(p).read()
 s = s.replace('<broker xmlns="http://activemq.apache.org/schema/core"',
@@ -152,12 +152,12 @@ CONF
 
 echo "interop: starting brokers"
 docker rm -f $containers >/dev/null 2>&1 || true
-docker run -d --name pub-it-classic \
-  -p $CLASSIC_PORT:61616 -p $CLASSIC_TLS_PORT:61617 -p $CLASSIC_MTLS_PORT:61618 -p $CLASSIC_STOMP_PORT:61613 \
-  -p $CLASSIC_STOMP_TLS_PORT:61612 -p $CLASSIC_MQTT_PORT:1883 \
-  -p $CLASSIC_AMQP_PORT:5672 -p $CLASSIC_AMQPS_PORT:5671 \
-  -v "$certs:/certs:ro" -v "$work/classic/activemq.xml:/opt/apache-activemq/conf/activemq.xml:ro" \
-  "$classic_image" >/dev/null
+docker run -d --name pub-it-activemq \
+  -p $ACTIVEMQ_PORT:61616 -p $ACTIVEMQ_TLS_PORT:61617 -p $ACTIVEMQ_MTLS_PORT:61618 -p $ACTIVEMQ_STOMP_PORT:61613 \
+  -p $ACTIVEMQ_STOMP_TLS_PORT:61612 -p $ACTIVEMQ_MQTT_PORT:1883 \
+  -p $ACTIVEMQ_AMQP_PORT:5672 -p $ACTIVEMQ_AMQPS_PORT:5671 \
+  -v "$certs:/certs:ro" -v "$work/activemq/activemq.xml:/opt/apache-activemq/conf/activemq.xml:ro" \
+  "$activemq_image" >/dev/null
 docker run -d --name pub-it-artemis -p $ARTEMIS_PORT:61616 -p $ARTEMIS_TLS_PORT:61617 \
   -p $ARTEMIS_STOMP_PORT:61613 -p $ARTEMIS_MQTT_PORT:1883 -p $ARTEMIS_AMQP_PORT:5672 \
   -e ARTEMIS_USER=artemis -e ARTEMIS_PASSWORD=artemis \
@@ -191,7 +191,7 @@ wait_for() { # container, log line
   done
   echo "interop: $1 did not start:" >&2; docker logs "$1" 2>&1 | tail -30 >&2; exit 1
 }
-wait_for pub-it-classic "Apache ActiveMQ .* started"
+wait_for pub-it-activemq "Apache ActiveMQ .* started"
 wait_for pub-it-artemis "AMQ221007"
 wait_for pub-it-mosquitto "mosquitto version .* running"
 wait_for pub-it-rabbitmq "Server startup complete"
@@ -209,24 +209,24 @@ if [ -n "${AZURE_SERVICEBUS:-}" ]; then
 fi
 
 echo "interop: Java helpers"
-docker cp pub-it-classic:/opt/apache-activemq/lib "$work/lib" >/dev/null
+docker cp pub-it-activemq:/opt/apache-activemq/lib "$work/lib" >/dev/null
 mkdir -p "$work/classes"
 javac -nowarn -cp "$work/lib/*:$work/lib/optional/*" -d "$work/classes" "$here"/java/*.java
 
-export PUB_IT_CLASSIC="amq://localhost:$CLASSIC_PORT"
-export PUB_IT_CLASSIC_TLS="amqs://localhost:$CLASSIC_TLS_PORT"
-export PUB_IT_CLASSIC_MTLS="amqs://localhost:$CLASSIC_MTLS_PORT"
-export PUB_IT_CLASSIC_STOMP="stomp://localhost:$CLASSIC_STOMP_PORT"
-export PUB_IT_CLASSIC_JAVA="tcp://localhost:$CLASSIC_PORT"
-export PUB_IT_CLASSIC_STOMP_TLS="stomps://localhost:$CLASSIC_STOMP_TLS_PORT"
-export PUB_IT_CLASSIC_MQTT="mqtt://localhost:$CLASSIC_MQTT_PORT"
+export PUB_IT_ACTIVEMQ="amq://localhost:$ACTIVEMQ_PORT"
+export PUB_IT_ACTIVEMQ_TLS="amqs://localhost:$ACTIVEMQ_TLS_PORT"
+export PUB_IT_ACTIVEMQ_MTLS="amqs://localhost:$ACTIVEMQ_MTLS_PORT"
+export PUB_IT_ACTIVEMQ_STOMP="stomp://localhost:$ACTIVEMQ_STOMP_PORT"
+export PUB_IT_ACTIVEMQ_JAVA="tcp://localhost:$ACTIVEMQ_PORT"
+export PUB_IT_ACTIVEMQ_STOMP_TLS="stomps://localhost:$ACTIVEMQ_STOMP_TLS_PORT"
+export PUB_IT_ACTIVEMQ_MQTT="mqtt://localhost:$ACTIVEMQ_MQTT_PORT"
 export PUB_IT_ARTEMIS_STOMP="stomp://artemis:artemis@localhost:$ARTEMIS_STOMP_PORT"
 export PUB_IT_ARTEMIS_MQTT="mqtt://artemis:artemis@localhost:$ARTEMIS_MQTT_PORT"
 export PUB_IT_MOSQUITTO="mqtt://localhost:$MOSQUITTO_PORT"
 export PUB_IT_MOSQUITTO_TLS="mqtts://localhost:$MOSQUITTO_TLS_PORT"
 export PUB_IT_MOSQUITTO_AUTH="mqtt://localhost:$MOSQUITTO_AUTH_PORT"
-export PUB_IT_CLASSIC_AMQP="amqp://localhost:$CLASSIC_AMQP_PORT"
-export PUB_IT_CLASSIC_AMQPS="amqps://localhost:$CLASSIC_AMQPS_PORT"
+export PUB_IT_ACTIVEMQ_AMQP="amqp://localhost:$ACTIVEMQ_AMQP_PORT"
+export PUB_IT_ACTIVEMQ_AMQPS="amqps://localhost:$ACTIVEMQ_AMQPS_PORT"
 export PUB_IT_ARTEMIS_AMQP="amqp://artemis:artemis@localhost:$ARTEMIS_AMQP_PORT"
 export PUB_IT_RABBITMQ_AMQP="amqp://guest:guest@localhost:$RABBITMQ_AMQP_PORT"
 # RabbitMQ serves AMQP 0-9-1 and 1.0 on the same port.

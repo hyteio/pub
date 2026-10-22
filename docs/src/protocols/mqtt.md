@@ -1,7 +1,14 @@
 # MQTT
 
 `mqtt://host[:1883]/topic`, `mqtts://host[:8883]/topic` and `mqtt+ssl://` (TLS). MQTT 5.0 by
-default; `-O version=3.1.1` selects 3.1.1.
+default; `-O version=3.1.1` selects 3.1.1. ActiveMQ (5.x and 6.x) speaks only 3.1.1, so set
+`version = 3.1.1` for it, in an alias or a `[module "mqtt"]` section; a broker that hangs up on
+MQTT 5 gets a hint saying so.
+
+A topic's `#` wildcard is kept even though URLs treat `#` as the start of a fragment, and a query
+after it still sets options: `mqtt://broker/sensors/#?version=3.1.1` subscribes to `sensors/#`.
+Topic filters are checked before subscribing: `#` only as the whole last level, `+` only as a
+whole level.
 
 Commands: `send`, `recv`, `unsub` (persistent sessions), `ping`.
 

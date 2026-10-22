@@ -6,7 +6,7 @@
 //!
 //! [`MockConfig`] adds an advertised heart-beat (the mock itself never sends
 //! one, so it doubles as a silent broker), a `server` name — `ActiveMQ/...`
-//! turns on Classic's browsing (`browser:true`, copies then `browser:end`).
+//! turns on ActiveMQ's browsing (`browser:true`, copies then `browser:end`).
 
 use std::collections::{HashMap, VecDeque};
 use std::net::{SocketAddr, TcpListener, TcpStream};
@@ -176,7 +176,7 @@ fn serve(tcp: TcpStream, state: Arc<Mutex<State>>, cfg: MockConfig) -> pub_core:
                 let id = f.get("id").unwrap_or_default().to_string();
                 let dest = f.get("destination").unwrap_or_default().to_string();
                 if f.get("browser") == Some("true") && server.starts_with("ActiveMQ/") {
-                    // Classic's browse: copies, then the end marker.
+                    // ActiveMQ's browse: copies, then the end marker.
                     let copies: Vec<Frame> = state
                         .lock()
                         .unwrap()

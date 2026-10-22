@@ -5,7 +5,7 @@
 //! sends a bare EOL when it has been quiet that long, and gives up when the
 //! broker is silent for twice its interval.
 //!
-//! Broker extensions (ActiveMQ / Artemis): browsing (`browser:true`, Classic
+//! Broker extensions (ActiveMQ / Artemis): browsing (`browser:true`, ActiveMQ
 //! only, ended by a `browser:end` message) and durable subscriptions
 //! (`activemq.subscriptionName` / `durable-subscription-name`, with a
 //! `client-id` on CONNECT).
@@ -212,7 +212,7 @@ impl StompSession {
         }
     }
 
-    fn is_classic(&self) -> bool {
+    fn is_activemq(&self) -> bool {
         self.connected
             .get("server")
             .is_some_and(|s| s.starts_with("ActiveMQ/"))
@@ -533,7 +533,7 @@ impl Session for StompSession {
         self.subscription(destination, opts, false, None, sink)
     }
 
-    /// ActiveMQ Classic browses (`browser:true`); others would consume the
+    /// ActiveMQ browses (`browser:true`); others would consume the
     /// messages instead, so pub refuses.
     fn browse(
         &mut self,
@@ -541,7 +541,7 @@ impl Session for StompSession {
         opts: &ReceiveOptions,
         sink: &mut dyn FnMut(Message) -> Result<()>,
     ) -> Result<usize> {
-        if !self.is_classic() {
+        if !self.is_activemq() {
             bail_kind!(
                 Unsupported,
                 "only ActiveMQ browses over STOMP (this server is {}); browsing elsewhere would consume",
@@ -559,7 +559,7 @@ impl Session for StompSession {
     }
 
     /// Remove a durable subscription: UNSUBSCRIBE with its name, which both
-    /// ActiveMQ Classic and Artemis honour (for the connection's client-id).
+    /// ActiveMQ and Artemis honour (for the connection's client-id).
     fn unsubscribe(&mut self, _destination: &Destination, name: &str) -> Result<()> {
         self.need_client_id()?;
         let id = self.next("unsub");

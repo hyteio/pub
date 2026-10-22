@@ -357,12 +357,12 @@ mod extensions {
     }
 
     #[test]
-    fn browse_on_activemq_classic_only() {
-        let classic = MockBroker::start_with(MockConfig {
+    fn browse_on_activemq_only() {
+        let activemq = MockBroker::start_with(MockConfig {
             server: Some("ActiveMQ/6.2.0".into()),
             ..Default::default()
         });
-        let mut s = connect(&classic.url("")).unwrap();
+        let mut s = connect(&activemq.url("")).unwrap();
         for b in ["a", "b"] {
             s.send(&Destination::new("/queue/q"), &Message::new(b))
                 .unwrap();
@@ -378,9 +378,9 @@ mod extensions {
         })
         .unwrap();
         assert_eq!(got, [b"a".to_vec(), b"b".to_vec()]);
-        assert_eq!(classic.queued("/queue/q").len(), 2);
-        assert_eq!(classic.frames("SUBSCRIBE")[0].get("browser"), Some("true"));
-        assert_eq!(classic.acks(), 0);
+        assert_eq!(activemq.queued("/queue/q").len(), 2);
+        assert_eq!(activemq.frames("SUBSCRIBE")[0].get("browser"), Some("true"));
+        assert_eq!(activemq.acks(), 0);
 
         let other = MockBroker::start(None);
         let mut s = connect(&other.url("")).unwrap();

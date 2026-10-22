@@ -43,7 +43,7 @@ pub ping 'amq://broker?jms.userName=app&jms.password=secret&connectionTimeout=30
 | `jms.dispatchAsync`, `jms.exclusiveConsumer`, `jms.useRetroactiveConsumer` | `true`, `false`, `false` | ConsumerInfo flags |
 | `jms.sendAcksAsync` | `true` | acknowledge without waiting for the broker |
 | `jms.consumerExpiryCheckEnabled` | `true` | drop (and ack as expired) messages that expired on the way |
-| `broker-type` | `auto` | which broker, for destination management; `auto` decides from the broker's id |
+| `broker-type` | `auto` | `activemq` or `artemis`, for destination management; `auto` decides from the broker's id (`classic`, the 1.0.0 name, still works) |
 
 Other names (`pub config settings openwire` has them all): `connectionTimeout` and `soTimeout`
 (ms) for `connect-timeout` and `receive-timeout`; `tcpNoDelay`, `keepAlive`, `socketBufferSize`
@@ -156,7 +156,7 @@ pub dest delete amq://b/queue/orders        # refused while it has consumers (ex
 ActiveMQ announces destinations on its advisory topics (`ActiveMQ.Advisory.Queue` and
 `.Topic`), which pub listens to for `-m` (1s; there is no end marker). Brokers that don't are asked
 through their management API (`activemq.management`, with replies on a temporary queue; the user
-needs `manage` permission). pub tells them apart by the broker's id; `broker-type` overrides that.
+needs `manage` permission). pub tells them apart by the broker's id; `broker-type = activemq` or `artemis` overrides that.
 Broker internals (`ActiveMQ.Advisory.*`, `$sys.*`, `activemq.*`, temporary queues) are hidden unless
 `--all`.
 

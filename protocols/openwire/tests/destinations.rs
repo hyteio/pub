@@ -1,4 +1,4 @@
-//! Destination management against the mock broker (ActiveMQ Classic style:
+//! Destination management against the mock broker (ActiveMQ style:
 //! advisory topics and DestinationInfo).
 
 use std::time::Duration;
@@ -28,7 +28,7 @@ const WAIT: Duration = Duration::from_millis(300);
 fn create_list_and_delete() {
     let broker = MockBroker::start(MockConfig::default());
     let mut s = connect(&broker.url(""));
-    assert_eq!(s.broker_type(), BrokerType::Classic); // "ID:mock-broker"
+    assert_eq!(s.broker_type(), BrokerType::ActiveMq); // "ID:mock-broker"
     s.create_destination(&Destination::new("/queue/orders"))
         .unwrap();
     s.create_destination(&Destination::new("topic://prices"))

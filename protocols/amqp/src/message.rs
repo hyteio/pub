@@ -212,7 +212,7 @@ pub fn is_textual_utf8(content_type: &str) -> bool {
 }
 
 /// Address prefixes a broker advertises in its open properties
-/// (`queue-prefix`, `topic-prefix`): ActiveMQ Classic names destinations by
+/// (`queue-prefix`, `topic-prefix`): ActiveMQ names destinations by
 /// address alone (`topic://news`) and ignores capabilities, so Qpid JMS — and
 /// pub — prefix queue and topic addresses when told to. Artemis uses the
 /// capabilities instead and advertises none.
@@ -583,15 +583,15 @@ mod tests {
 
     #[test]
     fn advertised_prefixes() {
-        let classic = Prefixes {
+        let activemq = Prefixes {
             queue: Some("queue://".into()),
             topic: Some("topic://".into()),
         };
-        assert_eq!(classic.apply("news", Some("topic")), "topic://news");
-        assert_eq!(classic.apply("orders", Some("queue")), "queue://orders");
-        assert_eq!(classic.apply("orders", None), "orders");
+        assert_eq!(activemq.apply("news", Some("topic")), "topic://news");
+        assert_eq!(activemq.apply("orders", Some("queue")), "queue://orders");
+        assert_eq!(activemq.apply("orders", None), "orders");
         assert_eq!(Prefixes::default().apply("news", Some("topic")), "news");
-        let a = to_amqp(&sample(), "/topic/news", None, TextBody::Value, &classic).unwrap();
+        let a = to_amqp(&sample(), "/topic/news", None, TextBody::Value, &activemq).unwrap();
         let p = a.properties.unwrap();
         assert_eq!(p.to.as_deref(), Some("topic://news"));
         assert_eq!(p.reply_to.as_deref(), Some("topic://replies"));

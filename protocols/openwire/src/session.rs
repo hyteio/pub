@@ -401,7 +401,7 @@ impl OpenWireSession {
                 .map(str::to_ascii_lowercase)
                 .as_deref()
             {
-                Some("classic") => Some(BrokerType::Classic),
+                Some("activemq" | "classic") => Some(BrokerType::ActiveMq),
                 Some("artemis") => Some(BrokerType::Artemis),
                 _ => None,
             },
@@ -1085,8 +1085,8 @@ fn is_internal_destination(name: &str) -> bool {
 /// Which ActiveMQ broker: they differ in how destinations are listed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BrokerType {
-    /// ActiveMQ Classic: advisory topics.
-    Classic,
+    /// ActiveMQ: advisory topics.
+    ActiveMq,
     /// ActiveMQ Artemis: its management API (`activemq.management`).
     Artemis,
 }
@@ -1123,7 +1123,7 @@ pub fn management_names(reply: &str) -> Result<Vec<String>> {
 }
 
 /// Artemis's own addresses and queues (`$sys.*`, `activemq.*`), and temporary
-/// queues (Java names them `<connection id>:<n>`), which Classic doesn't list.
+/// queues (Java names them `<connection id>:<n>`), which ActiveMQ doesn't list.
 fn is_artemis_internal(name: &str) -> bool {
     let temporary = name.starts_with("ID:")
         && name
@@ -1265,7 +1265,7 @@ impl OpenWireSession {
         Ok(())
     }
 
-    /// `broker-type`, or from the broker's id: Classic's are `ID:host-…`,
+    /// `broker-type`, or from the broker's id: ActiveMQ's are `ID:host-…`,
     /// Artemis's are UUIDs.
     pub fn broker_type(&self) -> BrokerType {
         if let Some(t) = self.broker_type {
@@ -1280,7 +1280,7 @@ impl OpenWireSession {
             });
         match id {
             Some(id) if !id.starts_with("ID:") => BrokerType::Artemis,
-            _ => BrokerType::Classic,
+            _ => BrokerType::ActiveMq,
         }
     }
 
