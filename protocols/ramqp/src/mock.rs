@@ -74,7 +74,7 @@ impl MockBroker {
     }
 
     pub fn url(&self, path: &str) -> String {
-        format!("rampq://{}{path}", self.addr)
+        format!("ramqp://{}{path}", self.addr)
     }
 
     pub fn declare_queue(&self, name: &str) {
@@ -162,7 +162,7 @@ struct Consumer {
 }
 
 fn serve(tcp: TcpStream, state: &Mutex<State>, cfg: &MockConfig) -> pub_core::Result<()> {
-    let mut conn = Connection::new(Stream::Plain(tcp), RampqCodec::default(), Trace::default());
+    let mut conn = Connection::new(Stream::Plain(tcp), RamqpCodec::default(), Trace::default());
     // The client's protocol header comes first.
     let header = match conn.recv(Some(Duration::from_secs(5)))? {
         Some(Frame::ProtocolHeader(h)) => h,
@@ -250,7 +250,7 @@ fn serve(tcp: TcpStream, state: &Mutex<State>, cfg: &MockConfig) -> pub_core::Re
     let mut tx_acks: Vec<u64> = Vec::new();
     let mut publishing: Option<Publishing> = None;
 
-    let reply = |conn: &mut Connection<RampqCodec>, m: Method| conn.send(&Frame::method(1, m));
+    let reply = |conn: &mut Connection<RamqpCodec>, m: Method| conn.send(&Frame::method(1, m));
     let requeue = |unacked: &mut Vec<(u64, String, Stored)>| {
         let mut st = state.lock().unwrap();
         for (_, q, mut m) in unacked.drain(..).rev() {
@@ -405,7 +405,7 @@ fn serve(tcp: TcpStream, state: &Mutex<State>, cfg: &MockConfig) -> pub_core::Re
         }
         let Some(method) = method else { continue };
 
-        let channel_error = |conn: &mut Connection<RampqCodec>, code: u16, text: String| {
+        let channel_error = |conn: &mut Connection<RamqpCodec>, code: u16, text: String| {
             conn.send(&Frame::method(
                 1,
                 Method::ChannelClose(ChannelClose {

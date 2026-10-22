@@ -621,7 +621,7 @@ dependencies = [
  "pub-format-xml",
  "pub-mqtt",
  "pub-openwire",
- "pub-rampq",
+ "pub-ramqp",
  "pub-stomp",
  "serde_json",
  "tempfile",
@@ -685,12 +685,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "pub-rampq"
+name = "pub-ramqp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "pub-core",
- "pub-rampq",
+ "pub-ramqp",
 ]
 
 [[package]]

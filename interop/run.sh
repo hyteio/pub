@@ -225,7 +225,7 @@ export PUB_IT_CLASSIC_AMQPS="amqps://localhost:$CLASSIC_AMQPS_PORT"
 export PUB_IT_ARTEMIS_AMQP="amqp://artemis:artemis@localhost:$ARTEMIS_AMQP_PORT"
 export PUB_IT_RABBITMQ_AMQP="amqp://guest:guest@localhost:$RABBITMQ_AMQP_PORT"
 # RabbitMQ serves AMQP 0-9-1 and 1.0 on the same port.
-export PUB_IT_RABBITMQ_RAMPQ="rampq://guest:guest@localhost:$RABBITMQ_AMQP_PORT"
+export PUB_IT_RABBITMQ_RAMQP="ramqp://guest:guest@localhost:$RABBITMQ_AMQP_PORT"
 # RabbitMQ needs its queues declared; tests do it through this container.
 export PUB_IT_RABBITMQ_CONTAINER=pub-it-rabbitmq
 export PUB_IT_ARTEMIS="amq://artemis:artemis@localhost:$ARTEMIS_PORT"

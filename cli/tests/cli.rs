@@ -1895,8 +1895,8 @@ fn amqp_send_receive_browse() {
 }
 
 #[test]
-fn rampq_send_receive_move() {
-    use pub_rampq::mock::{MockBroker as RabbitBroker, MockConfig};
+fn ramqp_send_receive_move() {
+    use pub_ramqp::mock::{MockBroker as RabbitBroker, MockConfig};
     let home = tempfile::tempdir().unwrap();
     let broker = RabbitBroker::start(MockConfig::default());
     let base = broker.url("");
@@ -2004,7 +2004,7 @@ fn rampq_send_receive_move() {
     );
     let modules = ok(&run(home.path(), &["modules"], None));
     assert!(
-        modules.contains("rampq:5672") && modules.contains("rampqs:5671 (tls)"),
+        modules.contains("ramqp:5672") && modules.contains("ramqps:5671 (tls)"),
         "{modules}"
     );
 }

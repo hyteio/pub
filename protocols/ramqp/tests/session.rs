@@ -7,17 +7,17 @@ use pub_core::module::{Destination, DestinationKinds, ReceiveOptions};
 use pub_core::{
     exit_code, BodyType, Context, Endpoint, Field, Message, Module, Session, Trace, Value,
 };
-use pub_rampq::mock::{MockBroker, MockConfig};
-use pub_rampq::{RampqModule, RampqSession};
+use pub_ramqp::mock::{MockBroker, MockConfig};
+use pub_ramqp::{RamqpModule, RamqpSession};
 
-fn connect(url: &str) -> pub_core::Result<RampqSession> {
+fn connect(url: &str) -> pub_core::Result<RamqpSession> {
     let mut ep = Endpoint::parse(url).unwrap();
     ep.apply_credentials().unwrap();
     let ctx = Context {
         trace: Trace::default(),
-        scheme: RampqModule.schemes()[0],
+        scheme: RamqpModule.schemes()[0],
     };
-    RampqSession::connect(&ep, &ctx)
+    RamqpSession::connect(&ep, &ctx)
 }
 
 fn opts(count: Option<usize>) -> ReceiveOptions {
@@ -52,7 +52,7 @@ fn login_vhost_and_info() {
         credentials: Some(("app".into(), "s3cret".into())),
     });
     let url = broker.url("");
-    let s = connect(&url.replace("rampq://", "rampq://app:s3cret@")).unwrap();
+    let s = connect(&url.replace("ramqp://", "ramqp://app:s3cret@")).unwrap();
     let info = s.info();
     assert!(
         info.contains(&("product".into(), "mock 1.0".into())),
@@ -61,7 +61,7 @@ fn login_vhost_and_info() {
     assert!(info.contains(&("sasl".into(), "PLAIN".into())), "{info:?}");
     assert_eq!(
         exit_code(
-            &connect(&url.replace("rampq://", "rampq://app:nope@"))
+            &connect(&url.replace("ramqp://", "ramqp://app:nope@"))
                 .err()
                 .unwrap()
         ),
@@ -71,7 +71,7 @@ fn login_vhost_and_info() {
     assert!(format!("{e:#}").contains("-u user"), "{e:#}");
     let e = connect(&format!(
         "{}?vhost=prod",
-        url.replace("rampq://", "rampq://app:s3cret@")
+        url.replace("ramqp://", "ramqp://app:s3cret@")
     ))
     .err()
     .unwrap();

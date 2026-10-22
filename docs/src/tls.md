@@ -1,7 +1,7 @@
 # TLS
 
 TLS is on for the TLS schemes (`stomps://`, `stomp+ssl://`, `mqtts://`, `amqs://`, `amqps://`,
-`rampqs://`), or with `tls = true` on any other. pub uses rustls with the `ring` crypto provider; it
+`ramqps://`), or with `tls = true` on any other. pub uses rustls with the `ring` crypto provider; it
 has no SSLv3, TLS 1.0 or 1.1, no CBC suites and no RSA key exchange.
 
 | Setting | Flag | Meaning |

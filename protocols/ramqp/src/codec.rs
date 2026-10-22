@@ -336,16 +336,16 @@ impl Frame {
 }
 
 #[derive(Debug)]
-pub struct RampqCodec {
+pub struct RamqpCodec {
     /// Largest frame accepted (the negotiated frame-max, or pub's limit).
     pub max_frame: usize,
     /// Send the protocol header before the next frame (connection start).
     pub send_header: bool,
 }
 
-impl Default for RampqCodec {
+impl Default for RamqpCodec {
     fn default() -> Self {
-        RampqCodec {
+        RamqpCodec {
             max_frame: pub_core::limits::DEFAULT_MAX_FRAME_SIZE,
             send_header: true,
         }
@@ -363,7 +363,7 @@ fn put_frame(out: &mut Vec<u8>, kind: u8, channel: u16, payload: &[u8]) -> Resul
     Ok(())
 }
 
-impl Codec for RampqCodec {
+impl Codec for RamqpCodec {
     type Frame = Frame;
 
     fn encode(&mut self, f: &Frame, out: &mut Vec<u8>) -> Result<()> {
@@ -471,8 +471,8 @@ mod tests {
 
     fn round(f: Frame) {
         let mut out = Vec::new();
-        RampqCodec::default().encode(&f, &mut out).unwrap();
-        match RampqCodec::default().decode(&out).unwrap() {
+        RamqpCodec::default().encode(&f, &mut out).unwrap();
+        match RamqpCodec::default().decode(&out).unwrap() {
             Decoded::Frame(back, n) => {
                 assert_eq!(n, out.len());
                 assert_eq!(back, f);
@@ -484,7 +484,7 @@ mod tests {
     #[test]
     fn exact_bytes() {
         let mut out = Vec::new();
-        RampqCodec::default()
+        RamqpCodec::default()
             .encode(
                 &Frame::method(1, Method::ChannelOpen(ChannelOpen::default())),
                 &mut out,
@@ -492,13 +492,13 @@ mod tests {
             .unwrap();
         assert_eq!(out, [1, 0, 1, 0, 0, 0, 5, 0, 20, 0, 10, 0, 0xCE]);
         let mut hb = Vec::new();
-        RampqCodec::default()
+        RamqpCodec::default()
             .encode(&Frame::Heartbeat, &mut hb)
             .unwrap();
         assert_eq!(hb, [8, 0, 0, 0, 0, 0, 0, 0xCE]);
         // Bits: passive, durable, exclusive, auto-delete, no-wait in one octet.
         let mut q = Vec::new();
-        RampqCodec::default()
+        RamqpCodec::default()
             .encode(
                 &Frame::method(
                     1,
@@ -563,7 +563,7 @@ mod tests {
 
     #[test]
     fn refuses_what_it_should() {
-        let mut c = RampqCodec {
+        let mut c = RamqpCodec {
             max_frame: 100,
             ..Default::default()
         };

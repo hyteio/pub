@@ -191,7 +191,7 @@ Destination options, passed through to the broker:
 | `credit` | count | `1000` | link credit for receiving (how many messages the broker may send ahead) |
 | `prefetch-follows-count` | bool | `true` | grant only as much credit as -n asks for |
 
-## rampq module
+## ramqp module
 
 | Setting | Type | Default | Description |
 |---|---|---|---|

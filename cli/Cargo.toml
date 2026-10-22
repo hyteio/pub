@@ -13,20 +13,20 @@ path = "src/main.rs"
 # The end-to-end tests drive every module and format.
 [[test]]
 name = "cli"
-required-features = ["stomp", "mqtt", "openwire", "amqp", "rampq", "json", "xml"]
+required-features = ["stomp", "mqtt", "openwire", "amqp", "ramqp", "json", "xml"]
 
 [[test]]
 name = "brokers"
-required-features = ["stomp", "mqtt", "openwire", "amqp", "rampq", "json", "xml"]
+required-features = ["stomp", "mqtt", "openwire", "amqp", "ramqp", "json", "xml"]
 
 [features]
-default = ["stomp", "mqtt", "openwire", "amqp", "rampq", "json", "xml"]
+default = ["stomp", "mqtt", "openwire", "amqp", "ramqp", "json", "xml"]
 # Each protocol module is an optional crate behind a feature of the same name.
 stomp = ["dep:pub-stomp"]
 mqtt = ["dep:pub-mqtt"]
 openwire = ["dep:pub-openwire"]
 amqp = ["dep:pub-amqp"]
-rampq = ["dep:pub-rampq"]
+ramqp = ["dep:pub-ramqp"]
 # Message formats beyond the built-in raw and text, likewise.
 json = ["dep:pub-format-json"]
 xml = ["dep:pub-format-xml"]
@@ -38,7 +38,7 @@ pub-stomp = { workspace = true, optional = true }
 pub-mqtt = { workspace = true, optional = true }
 pub-openwire = { workspace = true, optional = true }
 pub-amqp = { workspace = true, optional = true }
-pub-rampq = { workspace = true, optional = true }
+pub-ramqp = { workspace = true, optional = true }
 pub-format-json = { workspace = true, optional = true }
 pub-format-xml = { workspace = true, optional = true }
 
@@ -47,6 +47,6 @@ pub-stomp = { workspace = true, features = ["mock"] }
 pub-mqtt = { workspace = true, features = ["mock"] }
 pub-openwire = { workspace = true, features = ["mock"] }
 pub-amqp = { workspace = true, features = ["mock"] }
-pub-rampq = { workspace = true, features = ["mock"] }
+pub-ramqp = { workspace = true, features = ["mock"] }
 serde_json.workspace = true
 tempfile.workspace = true

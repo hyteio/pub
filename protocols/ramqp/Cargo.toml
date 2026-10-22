@@ -1,5 +1,5 @@
 [package]
-name = "pub-rampq"
+name = "pub-ramqp"
 publish = false
 description = "AMQP 0-9-1 (RabbitMQ) module for pub"
 version.workspace = true
@@ -15,4 +15,4 @@ pub-core.workspace = true
 mock = []
 
 [dev-dependencies]
-pub-rampq = { path = ".", features = ["mock"] }
+pub-ramqp = { path = ".", features = ["mock"] }

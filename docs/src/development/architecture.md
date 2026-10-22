@@ -11,7 +11,7 @@ protocols/stomp/     (pub-stomp) STOMP 1.0–1.2: frame codec and session
 protocols/mqtt/      (pub-mqtt) MQTT 5.0 and 3.1.1: packet codec, message mapping, session
 protocols/openwire/  (pub-openwire) ActiveMQ OpenWire v12: tight and loose marshalling, session
 protocols/amqp/      (pub-amqp) AMQP 1.0: type system, frames, SASL, sessions and links; Azure Service Bus
-protocols/rampq/     (pub-rampq) RabbitMQ AMQP 0-9-1: field tables, method codec, channel session
+protocols/ramqp/     (pub-ramqp) RabbitMQ AMQP 0-9-1: field tables, method codec, channel session
 formats/json/        (pub-format-json) the JSON / JSON Lines format (raw and text are in core)
 formats/xml/         (pub-format-xml) the XML format
 cli/                 (pub-cli) the `pub` binary: arguments (clap), commands, the module registry

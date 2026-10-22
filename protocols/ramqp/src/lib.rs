@@ -1,5 +1,5 @@
-//! AMQP 0-9-1 module for pub — "rampq", RabbitMQ's AMQP 0.9.1 (`rampq://`,
-//! `rampqs://`): RabbitMQ, LavinMQ and other 0-9-1 brokers.
+//! AMQP 0-9-1 module for pub — "ramqp", RabbitMQ's AMQP 0.9.1 (`ramqp://`,
+//! `ramqps://`): RabbitMQ, LavinMQ and other 0-9-1 brokers.
 //!
 //! Written from the AMQP 0-9-1 specification with RabbitMQ's errata (field
 //! table types) and extensions (publisher confirms, `basic.nack`,
@@ -22,18 +22,18 @@ use pub_core::{
     Context, Endpoint, Field, Module, Result, SchemeInfo, Session, Setting, SettingType, Verb,
 };
 
-pub use session::RampqSession;
+pub use session::RamqpSession;
 
-pub struct RampqModule;
+pub struct RamqpModule;
 
 const SCHEMES: &[SchemeInfo] = &[
     SchemeInfo {
-        scheme: "rampq",
+        scheme: "ramqp",
         default_port: 5672,
         tls: false,
     },
     SchemeInfo {
-        scheme: "rampqs",
+        scheme: "ramqps",
         default_port: 5671,
         tls: true,
     },
@@ -122,9 +122,9 @@ const SEND_FIELDS: &[Field] = &[
     Field::ContentType,
 ];
 
-impl Module for RampqModule {
+impl Module for RamqpModule {
     fn name(&self) -> &'static str {
-        "rampq"
+        "ramqp"
     }
 
     fn description(&self) -> &'static str {
@@ -171,7 +171,7 @@ impl Module for RampqModule {
     }
 
     /// The URL path, keeping a `#` wildcard (a URL fragment) in routing keys:
-    /// `rampq://b/topic/sensors.#`.
+    /// `ramqp://b/topic/sensors.#`.
     fn destination_name(&self, ep: &Endpoint) -> Option<String> {
         let mut name = ep.path.clone();
         if let Some(frag) = &ep.fragment {
@@ -186,10 +186,10 @@ impl Module for RampqModule {
     }
 
     fn connect(&self, ep: &Endpoint, ctx: &Context) -> Result<Box<dyn Session>> {
-        Ok(Box::new(RampqSession::connect(ep, ctx)?))
+        Ok(Box::new(RamqpSession::connect(ep, ctx)?))
     }
 }
 
 pub fn module() -> Box<dyn Module> {
-    Box::new(RampqModule)
+    Box::new(RamqpModule)
 }

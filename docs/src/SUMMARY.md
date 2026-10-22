@@ -21,7 +21,7 @@
 - [AMQP 1.0](protocols/amqp.md)
   - [Azure Service Bus](protocols/servicebus.md)
 - [MQTT](protocols/mqtt.md)
-- [RabbitMQ AMQP 0-9-1](protocols/rampq.md)
+- [RabbitMQ AMQP 0-9-1](protocols/ramqp.md)
 - [STOMP](protocols/stomp.md)
 
 # Reference

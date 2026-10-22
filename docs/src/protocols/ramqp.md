@@ -1,6 +1,6 @@
 # RabbitMQ AMQP 0-9-1
 
-`rampq://host[:5672]/destination`, `rampqs://host[:5671]` (TLS). "RabbitMQ AMQP 0.9.1": written
+`ramqp://host[:5672]/destination`, `ramqps://host[:5671]` (TLS). "RabbitMQ AMQP 0.9.1": written
 from the 0-9-1 specification plus RabbitMQ's extensions, and tested against RabbitMQ 4.
 
 Commands: `send`, `recv`, `unsub`, `move`, `dest create` and `dest delete`, `ping`.

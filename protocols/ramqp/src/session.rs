@@ -104,8 +104,8 @@ struct Incoming {
     body: Vec<u8>,
 }
 
-pub struct RampqSession {
-    conn: Connection<RampqCodec>,
+pub struct RamqpSession {
+    conn: Connection<RamqpCodec>,
     pub server_properties: Table,
     mechanism: String,
     vhost: String,
@@ -131,13 +131,13 @@ pub struct RampqSession {
     closed: bool,
 }
 
-impl RampqSession {
+impl RamqpSession {
     pub fn connect(ep: &Endpoint, ctx: &Context) -> Result<Self> {
         let mut trace = ctx.trace.clone();
         if let Some(p) = &ep.password {
             trace = trace.redacting(p);
         }
-        let mut conn = Connection::open(ep, &ctx.scheme, trace, RampqCodec::default())?;
+        let mut conn = Connection::open(ep, &ctx.scheme, trace, RamqpCodec::default())?;
         let our_max = conn.limits().max_frame_size;
         conn.codec.max_frame = our_max;
         conn.send(&Frame::ProtocolHeader(PROTOCOL_HEADER))?;
@@ -290,7 +290,7 @@ impl RampqSession {
         }
 
         let now = Instant::now();
-        let mut session = RampqSession {
+        let mut session = RamqpSession {
             conn,
             server_properties: start.server_properties,
             mechanism,
@@ -783,7 +783,7 @@ impl RampqSession {
     }
 }
 
-impl Session for RampqSession {
+impl Session for RamqpSession {
     fn info(&self) -> Vec<(String, String)> {
         let s = |k: &str| table_str(&self.server_properties, k);
         let mut info = vec![("version".to_string(), "0-9-1".to_string())];
@@ -1097,7 +1097,7 @@ impl Session for RampqSession {
     }
 }
 
-impl Drop for RampqSession {
+impl Drop for RamqpSession {
     fn drop(&mut self) {
         if !self.closed {
             self.conn.shutdown();
@@ -1127,14 +1127,14 @@ mod tests {
             e
         };
         assert_eq!(
-            choose_mechanism(&ep("rampq://u:p@h"), &["AMQPLAIN", "PLAIN"]).unwrap(),
+            choose_mechanism(&ep("ramqp://u:p@h"), &["AMQPLAIN", "PLAIN"]).unwrap(),
             "PLAIN"
         );
         assert_eq!(
-            choose_mechanism(&ep("rampq://h"), &["PLAIN", "ANONYMOUS"]).unwrap(),
+            choose_mechanism(&ep("ramqp://h"), &["PLAIN", "ANONYMOUS"]).unwrap(),
             "ANONYMOUS"
         );
-        let e = choose_mechanism(&ep("rampq://h"), &["PLAIN", "AMQPLAIN"]).unwrap_err();
+        let e = choose_mechanism(&ep("ramqp://h"), &["PLAIN", "AMQPLAIN"]).unwrap_err();
         assert_eq!(pub_core::exit_code(&e), 67);
         assert!(e.to_string().contains("-u user"), "{e}");
     }

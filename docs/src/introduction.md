@@ -4,7 +4,7 @@
 `curl` talks to web servers: one command, a URL, and flags.
 
 ```bash
-pub send stomp://mq01:61613/queue/orders -d '{"id":1}' -t application/json
+pub send amq://mq01:61616/queue/orders -d '{"id":1}' -P orderId:long=1
 pub recv jms.company.com/queue/orders -n 10 -m 5s -i
 pub ping jms.company.com -v
 pub recv 'mqtt://broker/sensors/#' -O qos=1 -i
@@ -18,7 +18,7 @@ pub send mqtt://broker/sensors/kitchen -d 21.5 -H 'unit: C' -O retain=true
 | [ActiveMQ OpenWire](protocols/openwire.md) v12 | `amq://`, `amqs://` | ActiveMQ 6.x and 5.17+ |
 | [AMQP 1.0](protocols/amqp.md) | `amqp://`, `amqps://` | ActiveMQ, RabbitMQ 4, Qpid, [Azure Service Bus](protocols/servicebus.md) |
 | [MQTT](protocols/mqtt.md) 5.0 and 3.1.1 | `mqtt://`, `mqtts://`, `mqtt+ssl://` | ActiveMQ, Mosquitto, EMQX, HiveMQ, … |
-| [RabbitMQ AMQP 0-9-1](protocols/rampq.md) | `rampq://`, `rampqs://` | RabbitMQ, LavinMQ |
+| [RabbitMQ AMQP 0-9-1](protocols/ramqp.md) | `ramqp://`, `ramqps://` | RabbitMQ, LavinMQ |
 | [STOMP](protocols/stomp.md) 1.0–1.2 | `stomp://`, `stomps://`, `stomp+ssl://` | ActiveMQ, RabbitMQ, any STOMP broker |
 
 Every protocol is an optional module: a build can include only the ones it needs (see

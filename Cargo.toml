@@ -13,7 +13,7 @@ pub-stomp = { path = "protocols/stomp" }
 pub-mqtt = { path = "protocols/mqtt" }
 pub-openwire = { path = "protocols/openwire" }
 pub-amqp = { path = "protocols/amqp" }
-pub-rampq = { path = "protocols/rampq" }
+pub-ramqp = { path = "protocols/ramqp" }
 pub-format-json = { path = "formats/json" }
 pub-format-xml = { path = "formats/xml" }
 anyhow = "1"

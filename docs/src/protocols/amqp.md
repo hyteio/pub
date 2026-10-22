@@ -67,7 +67,7 @@ discharges them, and sends and accepts in between carry the transaction id. `--t
 `pub move` receives from the source and, per message, sends a copy and accepts the original, a
 batch per transaction. The copy is the message as received, with the same message id, properties
 and body, and only `to` changed. ActiveMQ supports this. RabbitMQ doesn't, and refuses with
-exit 1 (`amqp:not-implemented`); use [`rampq://`](rampq.md) for transactions there.
+exit 1 (`amqp:not-implemented`); use [`ramqp://`](ramqp.md) for transactions there.
 
 ## Browsing
 

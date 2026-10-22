@@ -1928,12 +1928,12 @@ fn amqp_rabbitmq_specifics_and_tls() {
     assert_eq!(code(&["ping", &tls]), Some(35));
 }
 
-// ---- AMQP 0-9-1 (rampq) on RabbitMQ
+// ---- AMQP 0-9-1 (ramqp) on RabbitMQ
 
 #[test]
 #[ignore]
-fn rampq_on_rabbitmq() {
-    let url = env("PUB_IT_RABBITMQ_RAMPQ");
+fn ramqp_on_rabbitmq() {
+    let url = env("PUB_IT_RABBITMQ_RAMQP");
     let q = format!("{url}/queue/{}", unique("rq"));
     ok(&["dest", "create", &q]);
     ok(&[
@@ -2092,14 +2092,14 @@ fn rampq_on_rabbitmq() {
 
 #[test]
 #[ignore]
-fn rampq_and_amqp_1_0_on_the_same_rabbitmq() {
-    let (rampq, amqp) = (env("PUB_IT_RABBITMQ_RAMPQ"), env("PUB_IT_RABBITMQ_AMQP"));
+fn ramqp_and_amqp_1_0_on_the_same_rabbitmq() {
+    let (ramqp, amqp) = (env("PUB_IT_RABBITMQ_RAMQP"), env("PUB_IT_RABBITMQ_AMQP"));
     let q = unique("cross-rq");
-    ok(&["dest", "create", &format!("{rampq}/queue/{q}")]);
+    ok(&["dest", "create", &format!("{ramqp}/queue/{q}")]);
     // 0-9-1 → 1.0: text stays text (content type).
     ok(&[
         "send",
-        &format!("{rampq}/queue/{q}"),
+        &format!("{ramqp}/queue/{q}"),
         "-d",
         "from 0-9-1",
         "-O",
@@ -2130,7 +2130,7 @@ fn rampq_and_amqp_1_0_on_the_same_rabbitmq() {
     ]);
     let m = &json_lines(&ok(&[
         "recv",
-        &format!("{rampq}/queue/{q}"),
+        &format!("{ramqp}/queue/{q}"),
         "-F",
         "json",
         "-m",

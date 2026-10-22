@@ -21,8 +21,8 @@ fn registry() -> Registry {
     r.register(pub_openwire::module());
     #[cfg(feature = "amqp")]
     r.register(pub_amqp::module());
-    #[cfg(feature = "rampq")]
-    r.register(pub_rampq::module());
+    #[cfg(feature = "ramqp")]
+    r.register(pub_ramqp::module());
     #[cfg(feature = "json")]
     r.register_format(pub_format_json::format());
     #[cfg(feature = "xml")]

@@ -63,7 +63,7 @@ jobs:
           RUSTFLAGS: -D warnings
         run: |
           cargo build -p pub-cli --no-default-features
-          for f in stomp mqtt openwire amqp rampq json xml; do
+          for f in stomp mqtt openwire amqp ramqp json xml; do
             echo "::group::$f"
             cargo build -p pub-cli --no-default-features --features "$f"
             cargo test -p pub-cli --no-default-features --features "$f"

@@ -23,7 +23,7 @@ Each protocol and message format is a Cargo feature, all on by default:
 | `openwire` | ActiveMQ OpenWire |
 | `amqp` | AMQP 1.0 (and Azure Service Bus) |
 | `mqtt` | MQTT |
-| `rampq` | RabbitMQ AMQP 0-9-1 |
+| `ramqp` | RabbitMQ AMQP 0-9-1 |
 | `stomp` | STOMP |
 | `json` | the `json` message format |
 | `xml` | the `xml` message format |
