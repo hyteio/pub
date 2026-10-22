@@ -3,6 +3,14 @@
 Downloads for every release are on [GitHub](https://github.com/hyteio/pub/releases); see
 [Installation](installation.md).
 
+## 1.0.1
+
+No changes to `pub` itself.
+
+- The documentation adds these release notes.
+- Releases attach only the binaries and their checksums (1.0.0 also carried the documentation
+  bundle, `artifact.tar`).
+
 ## 1.0.0
 
 The first release.
