@@ -198,6 +198,14 @@ pub trait Module: Send + Sync {
 
     fn schemes(&self) -> &'static [SchemeInfo];
 
+    /// The scheme of another module that should handle this endpoint instead,
+    /// decided by its settings: `amqp://` with `version=0-9-1` is handled as
+    /// `ramqp://`. Asked once, by [`Registry::resolve_endpoint`], after every
+    /// settings layer is merged; the other module's settings then apply.
+    fn redirect(&self, _ep: &Endpoint) -> Option<&'static str> {
+        None
+    }
+
     fn verbs(&self) -> &'static [Verb];
 
     /// Settings this module reads, beyond pub-core's own
@@ -531,9 +539,15 @@ impl Registry {
 
     /// Resolve a target with every configuration layer, including `[module]`.
     pub fn resolve_endpoint(&self, target: &str, cfg: &crate::config::Config) -> Result<Endpoint> {
-        Endpoint::resolve_with(target, cfg, &|scheme| {
+        let mut ep = Endpoint::resolve_with(target, cfg, &|scheme| {
             self.lookup(scheme).ok().map(|(m, _)| m.name())
-        })
+        })?;
+        if let Ok((m, _)) = self.lookup(&ep.scheme) {
+            if let Some(scheme) = m.redirect(&ep) {
+                ep.scheme = scheme.to_string();
+            }
+        }
+        Ok(ep)
     }
 
     pub fn module_named(&self, name: &str) -> Option<&dyn Module> {
@@ -623,6 +637,44 @@ mod tests {
         assert!(e.to_string().contains("does not support 'send'"));
         assert_eq!(crate::exit_code(&e), 1);
         assert!(r.lookup("amq").is_err());
+    }
+
+    struct Front;
+    impl Module for Front {
+        fn name(&self) -> &'static str {
+            "front"
+        }
+        fn description(&self) -> &'static str {
+            ""
+        }
+        fn schemes(&self) -> &'static [SchemeInfo] {
+            &[SchemeInfo {
+                scheme: "front",
+                default_port: 2,
+                tls: false,
+            }]
+        }
+        fn redirect(&self, ep: &Endpoint) -> Option<&'static str> {
+            (ep.prop("version") == Some("2")).then_some("dummy")
+        }
+        fn verbs(&self) -> &'static [Verb] {
+            &[Verb::Ping]
+        }
+        fn connect(&self, _: &Endpoint, _: &Context) -> Result<Box<dyn Session>> {
+            unreachable!()
+        }
+    }
+
+    #[test]
+    fn redirect_hands_an_endpoint_to_another_module() {
+        let mut r = Registry::new();
+        r.register(Box::new(Dummy));
+        r.register(Box::new(Front));
+        let cfg = crate::config::Config::default();
+        let ep = r.resolve_endpoint("front://h", &cfg).unwrap();
+        assert_eq!(ep.scheme, "front");
+        let ep = r.resolve_endpoint("front://h?version=2", &cfg).unwrap();
+        assert_eq!(ep.scheme, "dummy");
     }
 
     #[test]

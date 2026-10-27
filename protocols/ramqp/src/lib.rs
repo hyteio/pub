@@ -54,6 +54,12 @@ const fn setting(
 }
 
 const SETTINGS: &[Setting] = &[
+    setting(
+        "version",
+        SettingType::OneOf(&["1.0", "0-9-1"]),
+        Some("0-9-1"),
+        "AMQP version: 0-9-1, or 1.0 to use the AMQP 1.0 module (the same as amqp://)",
+    ),
     setting("vhost", SettingType::Text, Some("/"), "the virtual host"),
     setting(
         "heartbeat",
@@ -133,6 +139,15 @@ impl Module for RamqpModule {
 
     fn schemes(&self) -> &'static [SchemeInfo] {
         SCHEMES
+    }
+
+    /// `ramqp://host?version=1.0` is `amqp://host`.
+    fn redirect(&self, ep: &Endpoint) -> Option<&'static str> {
+        match (ep.prop("version"), ep.scheme.to_ascii_lowercase().as_str()) {
+            (Some("1.0"), "ramqp") => Some("amqp"),
+            (Some("1.0"), "ramqps") => Some("amqps"),
+            _ => None,
+        }
     }
 
     fn verbs(&self) -> &'static [Verb] {

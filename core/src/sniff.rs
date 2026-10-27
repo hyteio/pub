@@ -13,7 +13,7 @@ pub fn identify(first: &[u8]) -> Option<&'static str> {
     if let Some(v) = first.strip_prefix(b"AMQP") {
         return Some(match v {
             [0, 0, 9, 1, ..] | [1, 1, 0, 9, ..] => {
-                "a RabbitMQ AMQP 0-9-1 port; try ramqp:// or ramqps://"
+                "a RabbitMQ AMQP 0-9-1 port; try amqp://…?version=0-9-1 or ramqp://"
             }
             [0 | 2 | 3, 1, 0, 0, ..] => "an AMQP 1.0 port; try amqp:// or amqps://",
             _ => "an AMQP port",

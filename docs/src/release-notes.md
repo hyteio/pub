@@ -3,6 +3,11 @@
 Downloads for every release are on [GitHub](https://github.com/hyteio/pub/releases); see
 [Installation](installation.md).
 
+## Unreleased
+
+- `version` setting for `amqp://` and `ramqp://`: `amqp://host?version=0-9-1` is AMQP 0-9-1, as
+  `ramqp://host` is, and `ramqp://host?version=1.0` is AMQP 1.0.
+
 ## 1.0.3
 
 - `pub --help` and the starter configuration from `pub config init` use ActiveMQ OpenWire

@@ -7,6 +7,7 @@ Commands: `send`, `recv`, `browse`, `unsub`, `move`, `ping`.
 
 | Setting | Default | |
 |---|---|---|
+| `version` | `1.0` | `0-9-1` hands the URL to the [RabbitMQ AMQP 0-9-1](ramqp.md) module: `amqp://host?version=0-9-1` is `ramqp://host` |
 | `client-id` | generated | the container id; durable subscriptions need a fixed one |
 | `vhost` | the URL host | the hostname sent in SASL and open |
 | `idle-timeout` | `60s` | give up after this much silence; pub sends empty frames at half the broker's timeout |

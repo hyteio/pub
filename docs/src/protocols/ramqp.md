@@ -3,10 +3,15 @@
 `ramqp://host[:5672]/destination`, `ramqps://host[:5671]` (TLS). "RabbitMQ AMQP 0.9.1": written
 from the 0-9-1 specification plus RabbitMQ's extensions, and tested against RabbitMQ 4.
 
+`amqp://host?version=0-9-1` (and `amqps://`) means the same, so a RabbitMQ URL can keep one scheme
+for both AMQP versions. Without `version`, `amqp://` is AMQP 1.0: RabbitMQ 4 accepts both on port
+5672, so pub does not guess.
+
 Commands: `send`, `recv`, `unsub`, `move`, `dest create` and `dest delete`, `ping`.
 
 | Setting | Default | |
 |---|---|---|
+| `version` | `0-9-1` | `1.0` hands the URL to the [AMQP 1.0](amqp.md) module: `ramqp://host?version=1.0` is `amqp://host` |
 | `vhost` | `/` | the virtual host (an unknown one is exit 67) |
 | `heartbeat` | `60s` | the smaller of ours and the broker's; `0` takes the broker's |
 | `confirms` | `true` | publisher confirms |

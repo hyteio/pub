@@ -56,6 +56,12 @@ const fn setting(
 
 const SETTINGS: &[Setting] = &[
     setting(
+        "version",
+        SettingType::OneOf(&["1.0", "0-9-1"]),
+        Some("1.0"),
+        "AMQP version: 1.0, or 0-9-1 to use the RabbitMQ AMQP 0-9-1 module (the same as ramqp://)",
+    ),
+    setting(
         "broker-type",
         SettingType::OneOf(&["auto", "servicebus", "other"]),
         Some("auto"),
@@ -130,6 +136,15 @@ impl Module for AmqpModule {
 
     fn schemes(&self) -> &'static [SchemeInfo] {
         SCHEMES
+    }
+
+    /// `amqp://host?version=0-9-1` is `ramqp://host`.
+    fn redirect(&self, ep: &Endpoint) -> Option<&'static str> {
+        match (ep.prop("version"), ep.scheme.to_ascii_lowercase().as_str()) {
+            (Some("0-9-1"), "amqp") => Some("ramqp"),
+            (Some("0-9-1"), "amqps") => Some("ramqps"),
+            _ => None,
+        }
     }
 
     fn verbs(&self) -> &'static [Verb] {

@@ -152,7 +152,7 @@ impl RamqpSession {
             } => s,
             Frame::ProtocolHeader(h) => bail_kind!(
                 Protocol,
-                "the broker speaks AMQP {}.{}.{}, not 0-9-1 (for AMQP 1.0 use amqp://)",
+                "the broker speaks AMQP {}.{}.{}, not 0-9-1 (for AMQP 1.0 use amqp:// without version=0-9-1)",
                 h[5],
                 h[6],
                 h[7]

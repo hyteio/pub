@@ -1894,6 +1894,41 @@ fn amqp_send_receive_browse() {
     ));
 }
 
+/// `amqp://…?version=0-9-1` is the 0-9-1 module, and `ramqp://…?version=1.0` the 1.0 one.
+#[test]
+fn amqp_version_picks_the_module() {
+    use pub_ramqp::mock::{MockBroker as RabbitBroker, MockConfig};
+    let home = tempfile::tempdir().unwrap();
+    let broker = RabbitBroker::start(MockConfig::default());
+    let ramqp = broker.url("");
+    let amqp = ramqp.replacen("ramqp://", "amqp://", 1);
+    ok(&run(
+        home.path(),
+        &["dest", "create", &format!("{amqp}/queue/v?version=0-9-1")],
+        None,
+    ));
+    let q = format!("{amqp}/queue/v?version=0-9-1");
+    ok(&run(home.path(), &["send", &q, "-d", "hi"], None));
+    // 0-9-1-only settings are accepted once the version says 0-9-1.
+    let got = ok(&run(
+        home.path(),
+        &["recv", &format!("{q}&prefetch=5"), "-n", "1"],
+        None,
+    ));
+    assert_eq!(got, "hi");
+    // Without it, amqp:// is AMQP 1.0, which a 0-9-1 broker doesn't speak.
+    let o = run(home.path(), &["ping", &amqp], None);
+    assert!(!o.status.success());
+    assert!(stderr(&o).contains("0-9-1"), "{}", stderr(&o));
+    // And the other way round: ramqp:// with version=1.0 is not 0-9-1.
+    let o = run(
+        home.path(),
+        &["ping", &format!("{ramqp}?version=1.0")],
+        None,
+    );
+    assert!(!o.status.success());
+}
+
 #[test]
 fn ramqp_send_receive_move() {
     use pub_ramqp::mock::{MockBroker as RabbitBroker, MockConfig};
